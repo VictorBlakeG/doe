@@ -1,8 +1,9 @@
 """
 Main module that orchestrates data import and cleaning workflow.
 """
-from import_module import load_csv_data, show_data_summary, remove_missing_data
+from importcsv import load_csv_data, show_data_summary, remove_missing_data
 from prep import calculate_fan_speed_mean, create_fan_speed_histogram
+from split import split_fan
 
 
 def main():
@@ -33,6 +34,20 @@ def main():
     print("Step 5: Generating fan speed mean histogram...")
     html_file = create_fan_speed_histogram(mean_fan_df)
     print(f"✓ Histogram generated: {html_file}\n")
+    
+    # Step 6: Split fan data by speed threshold
+    print("Step 6: Splitting fan data by speed threshold...")
+    fan_low_df, fan_high_df = split_fan(mean_fan_df)
+    print(f"✓ Fan data split successfully\n")
+    
+    # Display counts
+    print("================================================================================")
+    print("FAN SPEED DISTRIBUTION")
+    print("================================================================================")
+    print(f"Low speed fans (< 11999):    {len(fan_low_df):,} rows")
+    print(f"High speed fans (>= 12000):  {len(fan_high_df):,} rows")
+    print(f"Total:                       {len(fan_low_df) + len(fan_high_df):,} rows")
+    print("================================================================================\n")
     
     print("Data processing pipeline completed!")
     print(f"Final dataframe has {len(mean_fan_df)} rows\n")
