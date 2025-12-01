@@ -37,8 +37,10 @@ def balance_dataframes(fan_low_df, fan_high_df):
     balanced_high_df = fan_high_df.copy()
     
     # Randomly sample rows from each dataframe to reach target size
-    balanced_low_df = balanced_low_df.sample(n=target_rows, random_state=42)
-    balanced_high_df = balanced_high_df.sample(n=target_rows, random_state=42)
+    # Ensure we don't try to sample more rows than available
+    actual_target = min(target_rows, len(balanced_low_df), len(balanced_high_df))
+    balanced_low_df = balanced_low_df.sample(n=actual_target, random_state=42)
+    balanced_high_df = balanced_high_df.sample(n=actual_target, random_state=42)
     
     # Display results
     print(f"Final row counts after balancing:")

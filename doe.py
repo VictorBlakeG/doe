@@ -15,10 +15,9 @@ warnings.filterwarnings('ignore')
 
 def setup_doe_design(balanced_low_df, balanced_high_df):
     """
-    Set up a design of experiments with three factors.
+    Set up a design of experiments with two factors.
     
     Factors:
-    - Device_Vendor: Nominal (device vendor names)
     - Transceiver_Manufacturer: Nominal (transceiver manufacturer names)
     - Fan_Speed_Range: Categorical (L for low, H for high)
     
@@ -41,7 +40,6 @@ def setup_doe_design(balanced_low_df, balanced_high_df):
     doe_df = pd.concat([low_df, high_df], ignore_index=True)
     
     # Extract unique levels for each factor
-    device_vendors = doe_df['Device Vendor'].unique()
     transceiver_mfrs = doe_df['SFP_manufacturer'].unique()
     speed_ranges = ['L', 'H']
     
@@ -49,8 +47,6 @@ def setup_doe_design(balanced_low_df, balanced_high_df):
     print("DESIGN OF EXPERIMENTS SETUP")
     print("="*80)
     print(f"\nFactor Levels:")
-    print(f"  Device Vendor: {len(device_vendors)} levels")
-    print(f"    {device_vendors}")
     print(f"  Transceiver Manufacturer: {len(transceiver_mfrs)} levels")
     print(f"    {list(transceiver_mfrs[:5])}... (+{len(transceiver_mfrs)-5} more)")
     print(f"  Fan Speed Range: {len(speed_ranges)} levels")
@@ -78,7 +74,6 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
     output_path.mkdir(exist_ok=True)
     
     # Get unique levels for each factor
-    device_vendors = sorted(doe_df['Device Vendor'].unique())
     transceiver_mfrs = sorted(doe_df['SFP_manufacturer'].unique())
     speed_ranges = ['L', 'H']
     
@@ -86,16 +81,14 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
     design_rows = []
     run_number = 1
     
-    for vendor in device_vendors:
-        for tman in transceiver_mfrs:
-            for speed in speed_ranges:
-                design_rows.append({
-                    'Run': run_number,
-                    'Device_Vendor': vendor,
-                    'Transceiver_Manufacturer': tman,
-                    'Fan_Speed_Range': speed
-                })
-                run_number += 1
+    for tman in transceiver_mfrs:
+        for speed in speed_ranges:
+            design_rows.append({
+                'Run': run_number,
+                'Transceiver_Manufacturer': tman,
+                'Fan_Speed_Range': speed
+            })
+            run_number += 1
     
     design_table = pd.DataFrame(design_rows)
     
@@ -104,7 +97,7 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
     print("FULL FACTORIAL DESIGN TABLE")
     print("="*80)
     print(f"\nTotal Design Runs: {len(design_table)}")
-    print(f"Factors: {len(device_vendors)} × {len(transceiver_mfrs)} × {len(speed_ranges)}")
+    print(f"Factors: {len(transceiver_mfrs)} × {len(speed_ranges)}")
     print(f"\nFirst 20 runs:")
     print(design_table.head(20).to_string(index=False))
     print(f"\n... ({len(design_table)-20} more runs)")
@@ -128,7 +121,7 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
     <body>
         <h1>Full Factorial Design of Experiments</h1>
         <p><strong>Total Runs:</strong> {len(design_table)}</p>
-        <p><strong>Factors:</strong> Device Vendor × Transceiver Manufacturer × Fan Speed Range</p>
+        <p><strong>Factors:</strong> Transceiver Manufacturer × Fan Speed Range</p>
         <p><strong>Response:</strong> Interface Temperature</p>
         {html_table}
     </body>
@@ -159,8 +152,8 @@ def fit_doe_model(doe_df, output_dir='outputs'):
     output_path.mkdir(exist_ok=True)
     
     # Prepare data for model - encode categorical variables
-    model_df = doe_df[['Device Vendor', 'SFP_manufacturer', 'Fan_Speed_Range', 'Interface_Temp']].copy()
-    model_df.columns = ['Device_Vendor', 'Transceiver_Manufacturer', 'Fan_Speed_Range', 'ttemp']
+    model_df = doe_df[['SFP_manufacturer', 'Fan_Speed_Range', 'Interface_Temp']].copy()
+    model_df.columns = ['Transceiver_Manufacturer', 'Fan_Speed_Range', 'ttemp']
     
     # Fit model: response ~ all factors + two-way interactions
     formula = 'ttemp ~ C(Transceiver_Manufacturer) + C(Fan_Speed_Range) + C(Transceiver_Manufacturer):C(Fan_Speed_Range)'
