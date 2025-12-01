@@ -6,6 +6,8 @@ from prep import calculate_fan_speed_mean, create_fan_speed_histogram
 from split import split_fan
 from clean import analyze_device_vendors, clean_tman
 from export import export_fan_dfs_to_csv
+from balance import balance_dataframes
+from viz import create_fan_hl_histogram, create_ttemp_hl_histogram
 
 
 def main():
@@ -26,7 +28,9 @@ def main():
     # Step 3: Remove missing data
     print("Step 3: Removing rows with missing data...")
     csv_clean_df = remove_missing_data(csv_raw_df)
-    
+
+    print(f"Starting dataframe has {len(csv_clean_df)} rows\n")
+
     # Step 4: Calculate fan speed mean
     print("Step 4: Calculating fan speed mean...")
     mean_fan_df = calculate_fan_speed_mean(csv_clean_df)
@@ -67,10 +71,23 @@ def main():
     print(f"✓ Low speed fan data exported: {low_csv_path}")
     print(f"✓ High speed fan data exported: {high_csv_path}\n")
     
-    print("Data processing pipeline completed!")
-    print(f"Final dataframe has {len(mean_fan_df)} rows\n")
+    # Step 10: Balance dataframes to equal size
+    print("Step 10: Balancing dataframes to equal size...")
+    balanced_low_df, balanced_high_df = balance_dataframes(fan_low_df, fan_high_df)
+    print("✓ Dataframes balanced successfully\n")
     
-    return mean_fan_df
+    # Step 11: Generate comparative histograms
+    print("Step 11: Generating comparative fan speed histograms...")
+    hl_html_file = create_fan_hl_histogram(balanced_low_df, balanced_high_df)
+    print(f"✓ Comparative histogram generated: {hl_html_file}\n")
+    
+    # Step 12: Generate interface temperature comparative histograms
+    print("Step 12: Generating interface temperature comparative histograms...")
+    ttemp_html_file = create_ttemp_hl_histogram(balanced_low_df, balanced_high_df)
+    print(f"✓ Temperature histogram generated: {ttemp_html_file}\n")
+    
+    print("Data processing pipeline completed!")
+
 
 
 if __name__ == "__main__":
