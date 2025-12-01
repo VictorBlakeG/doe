@@ -8,6 +8,7 @@ from clean import analyze_device_vendors, clean_tman
 from export import export_fan_dfs_to_csv
 from balance import balance_dataframes
 from viz import create_fan_hl_histogram, create_ttemp_hl_histogram
+from doe import setup_doe_design, create_full_factorial_design, fit_doe_model
 
 
 def main():
@@ -85,6 +86,21 @@ def main():
     print("Step 12: Generating interface temperature comparative histograms...")
     ttemp_html_file = create_ttemp_hl_histogram(balanced_low_df, balanced_high_df)
     print(f"✓ Temperature histogram generated: {ttemp_html_file}\n")
+    
+    # Step 13: Set up Design of Experiments
+    print("Step 13: Setting up Design of Experiments...")
+    doe_df = setup_doe_design(balanced_low_df, balanced_high_df)
+    print("✓ DOE design setup completed\n")
+    
+    # Step 14: Create full-factorial design
+    print("Step 14: Creating full-factorial design...")
+    design_table = create_full_factorial_design(doe_df)
+    print("✓ Full-factorial design created\n")
+    
+    # Step 15: Fit DOE model
+    print("Step 15: Fitting Design of Experiments model...")
+    model, results, summary_stats = fit_doe_model(doe_df)
+    print("✓ DOE model fit completed\n")
     
     print("Data processing pipeline completed!")
 
