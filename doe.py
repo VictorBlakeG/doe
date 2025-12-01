@@ -223,7 +223,7 @@ def fit_doe_model(doe_df, output_dir='outputs'):
 
 def create_doe_report(results, anova_table, param_summary, output_path):
     """
-    Create an HTML report with model results, tables, and visualizations.
+    Create an HTML report with model results, tables, visualizations, and model formula.
     
     Args:
         results: Statsmodels regression results
@@ -231,11 +231,68 @@ def create_doe_report(results, anova_table, param_summary, output_path):
         param_summary: Parameter summary table
         output_path: Path to output directory
     """
+    # Extract model formula
+    model_formula = str(results.model.formula)
+    
+    # Calculate predicted response by Fan Speed Range
+    # Extract unique transceiver manufacturers
+    tman_levels = [param_name.split('[T.')[-1].rstrip(']') 
+                   for param_name in results.params.index 
+                   if 'Transceiver_Manufacturer' in param_name and ':' not in param_name]
+    
+    # Get the model predictions for different scenarios
+    speed_responses = {'L': [], 'H': []}
+    speed_responses_mean = {}
+    
+    for speed in ['L', 'H']:
+        # Calculate average response across transceiver manufacturers
+        intercept = results.params['Intercept']
+        speed_effect = results.params.get(f'C(Fan_Speed_Range)[T.{speed}]', 0)
+        avg_response = intercept + speed_effect
+        speed_responses_mean[speed] = avg_response
+        
+        # Calculate response for each transceiver manufacturer
+        for tman in tman_levels:
+            tman_effect = results.params.get(f'C(Transceiver_Manufacturer)[T.{tman}]', 0)
+            interaction_effect = results.params.get(f'C(Transceiver_Manufacturer)[T.{tman}]:C(Fan_Speed_Range)[T.{speed}]', 0)
+            response = intercept + tman_effect + speed_effect + interaction_effect
+            speed_responses[speed].append(response)
+    
+    # Create Plotly figure for fan speed response
+    fig = go.Figure()
+    
+    # Add box plot showing response distribution by fan speed
+    speeds = ['L', 'H']
+    speed_labels = {'L': 'Low Speed', 'H': 'High Speed'}
+    colors = {'L': '#FF6B6B', 'H': '#4ECDC4'}
+    
+    for speed in speeds:
+        fig.add_trace(go.Box(
+            y=speed_responses[speed],
+            name=speed_labels[speed],
+            marker=dict(color=colors[speed]),
+            boxmean='sd',
+            showlegend=True
+        ))
+    
+    fig.update_layout(
+        title='Model Response by Fan Speed Range',
+        yaxis_title='Predicted Interface Temperature (°C)',
+        xaxis_title='Fan Speed Range',
+        template='plotly_white',
+        height=500,
+        showlegend=True
+    )
+    
+    # Convert figure to HTML
+    response_plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
     # Create summary table
     summary_html = f"""
     <html>
     <head>
         <title>DOE Analysis Report</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <style>
             body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }}
             h1, h2 {{ color: #333; }}
@@ -247,10 +304,17 @@ def create_doe_report(results, anova_table, param_summary, output_path):
             .metric {{ display: inline-block; margin: 10px 20px 10px 0; }}
             .metric-value {{ font-size: 24px; font-weight: bold; color: #4CAF50; }}
             .metric-label {{ font-size: 12px; color: #666; }}
+            .formula {{ background-color: #f0f0f0; padding: 15px; border-left: 4px solid #4CAF50; margin: 10px 0; font-family: monospace; font-size: 14px; }}
+            .plot-container {{ margin: 20px 0; }}
         </style>
     </head>
     <body>
         <h1>Design of Experiments Analysis Report</h1>
+        
+        <div class="section">
+            <h2>Model Formula</h2>
+            <div class="formula">{model_formula}</div>
+        </div>
         
         <div class="section">
             <h2>Model Summary</h2>
@@ -270,6 +334,27 @@ def create_doe_report(results, anova_table, param_summary, output_path):
                 <div class="metric-value">{results.f_pvalue:.6f}</div>
                 <div class="metric-label">Prob (F-statistic)</div>
             </div>
+        </div>
+        
+        <div class="section">
+            <h2>Model Response by Fan Speed</h2>
+            <div class="plot-container">
+                {response_plot_html}
+            </div>
+            <table>
+                <tr>
+                    <th>Fan Speed Range</th>
+                    <th>Average Predicted Temperature (°C)</th>
+                </tr>
+                <tr>
+                    <td>Low Speed (L)</td>
+                    <td>{speed_responses_mean['L']:.4f}</td>
+                </tr>
+                <tr>
+                    <td>High Speed (H)</td>
+                    <td>{speed_responses_mean['H']:.4f}</td>
+                </tr>
+            </table>
         </div>
         
         <div class="section">
