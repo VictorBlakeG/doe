@@ -451,10 +451,10 @@ def create_doe_report(results, anova_table, param_summary, output_path):
             
             # Reduce font sizes for readability
             for ax in fig_leverage.get_axes():
-                ax.tick_params(labelsize=8)
-                ax.xaxis.label.set_fontsize(9)
-                ax.yaxis.label.set_fontsize(9)
-                ax.title.set_fontsize(10)
+                ax.tick_params(labelsize=6)
+                ax.xaxis.label.set_fontsize(7)
+                ax.yaxis.label.set_fontsize(7)
+                ax.title.set_fontsize(8)
             
             # Convert matplotlib figure to HTML
             import io
