@@ -427,6 +427,9 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     param_summary_clean = param_summary.copy()
     param_summary_clean.index = [_clean_label(idx) for idx in param_summary_clean.index]
     
+    # Sort by p-value FIRST (before any formatting)
+    param_summary_clean = param_summary_clean.sort_values('p-value')
+    
     # Add Significance column BEFORE converting p-values to strings
     alpha_risk = 0.05
     param_summary_clean['Significance'] = param_summary_clean['p-value'].apply(
@@ -443,12 +446,6 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     cols = list(param_summary_clean.columns)
     cols = cols[:-1] + ['Significance']  # Move Significance to end
     param_summary_clean = param_summary_clean[cols]
-    
-    # Sort by p-value (need to use original numeric values, not formatted strings)
-    # Create a temporary numeric column for sorting
-    param_summary_clean['_sort_pvalue'] = param_summary['p-value']
-    param_summary_clean = param_summary_clean.sort_values('_sort_pvalue')
-    param_summary_clean = param_summary_clean.drop('_sort_pvalue', axis=1)
     
     param_summary_html = param_summary_clean.to_html()
     
