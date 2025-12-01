@@ -340,6 +340,80 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     # Convert figure to HTML
     response_plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
     
+    # Create Actual by Predicted plot with confidence interval
+    # Get actual values and predictions
+    actual = results.model.endog
+    predicted = results.fittedvalues
+    residuals = results.resid
+    std_error = np.sqrt(results.mse_resid)
+    
+    # Calculate 95% confidence interval
+    ci_upper = predicted + 1.96 * std_error
+    ci_lower = predicted - 1.96 * std_error
+    
+    # Sort by predicted values for smooth confidence interval
+    sort_idx = np.argsort(predicted)
+    predicted_sorted = predicted.iloc[sort_idx]
+    ci_lower_sorted = ci_lower.iloc[sort_idx]
+    ci_upper_sorted = ci_upper.iloc[sort_idx]
+    
+    # Create Actual by Predicted plot
+    fig_ap = go.Figure()
+    
+    # Add confidence interval as shaded area (red)
+    fig_ap.add_trace(go.Scatter(
+        x=predicted_sorted,
+        y=ci_upper_sorted,
+        fill=None,
+        mode='lines',
+        line=dict(color='rgba(0,0,0,0)'),
+        showlegend=False
+    ))
+    
+    fig_ap.add_trace(go.Scatter(
+        x=predicted_sorted,
+        y=ci_lower_sorted,
+        fill='tonexty',
+        mode='lines',
+        line=dict(color='rgba(0,0,0,0)'),
+        fillcolor='rgba(255,0,0,0.2)',
+        name='95% Confidence Interval'
+    ))
+    
+    # Add actual data points (black)
+    fig_ap.add_trace(go.Scatter(
+        x=predicted,
+        y=actual,
+        mode='markers',
+        marker=dict(color='black', size=4, opacity=0.5),
+        name='Actual Data Points'
+    ))
+    
+    # Add diagonal reference line (perfect prediction)
+    min_val = min(predicted.min(), actual.min())
+    max_val = max(predicted.max(), actual.max())
+    fig_ap.add_trace(go.Scatter(
+        x=[min_val, max_val],
+        y=[min_val, max_val],
+        mode='lines',
+        line=dict(color='blue', dash='dash', width=2),
+        name='Perfect Prediction',
+        showlegend=True
+    ))
+    
+    fig_ap.update_layout(
+        title='Actual by Predicted Plot',
+        xaxis_title='Predicted Interface Temperature (°C)',
+        yaxis_title='Actual Interface Temperature (°C)',
+        template='plotly_white',
+        height=600,
+        width=700,
+        hovermode='closest'
+    )
+    
+    # Convert figure to HTML
+    actual_predicted_plot_html = fig_ap.to_html(full_html=False, include_plotlyjs=False)
+    
     # Clean ANOVA table index and columns
     anova_table_clean = anova_table.copy()
     anova_table_clean.index = [_clean_label(idx) for idx in anova_table_clean.index]
@@ -373,6 +447,13 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     </head>
     <body>
         <h1>Design of Experiments Analysis Report</h1>
+        
+        <div class="section">
+            <h2>Actual by Predicted Plot</h2>
+            <div class="plot-container">
+                {actual_predicted_plot_html}
+            </div>
+        </div>
         
         <div class="section">
             <h2>Model Formula</h2>
