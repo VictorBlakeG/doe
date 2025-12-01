@@ -428,6 +428,44 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     param_summary_clean.index = [_clean_label(idx) for idx in param_summary_clean.index]
     param_summary_html = param_summary_clean.to_html()
     
+    # Create leverage plots for each term
+    leverage_plots_html = ""
+    try:
+        from statsmodels.graphics.api import plot_partregress_grid
+        
+        # Get exog data and model terms
+        exog_data = results.model.exog
+        exog_names = results.model.exog_names
+        
+        # Filter out the intercept and create individual leverage plots
+        terms_to_plot = [name for name in exog_names if name != 'const']
+        
+        if terms_to_plot:
+            # Create a grid of leverage plots (2x2 or 2x3 depending on number of terms)
+            fig_leverage = plot_partregress_grid(
+                results,
+                fig=None,
+                exog_idx=list(range(1, min(len(terms_to_plot) + 1, 7)))  # Up to 6 plots
+            )
+            
+            # Convert matplotlib figure to HTML
+            import io
+            import base64
+            from matplotlib.backends.backend_agg import FigureCanvasAgg
+            
+            buf = io.BytesIO()
+            canvas = FigureCanvasAgg(fig_leverage)
+            canvas.print_png(buf)
+            buf.seek(0)
+            img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+            leverage_plots_html = f'<img src="data:image/png;base64,{img_base64}" style="width: 100%; max-width: 900px; height: auto;" alt="Leverage Plots">'
+            
+            import matplotlib.pyplot as plt
+            plt.close(fig_leverage)
+    except Exception as e:
+        print(f"Warning: Could not generate leverage plots: {e}")
+        leverage_plots_html = f'<p style="color: #666;">Leverage plots could not be generated: {str(e)}</p>'
+    
     # Create summary table
     summary_html = f"""
     <html>
@@ -513,6 +551,14 @@ def create_doe_report(results, anova_table, param_summary, output_path):
         <div class="section">
             <h2>Parameter Estimates (95% Confidence Interval)</h2>
             {param_summary_html}
+        </div>
+        
+        <div class="section">
+            <h2>Leverage Plots</h2>
+            <p>Leverage plots show the relationship between each variable and the response, controlling for other variables in the model.</p>
+            <div class="plot-container">
+                {leverage_plots_html}
+            </div>
         </div>
     </body>
     </html>
