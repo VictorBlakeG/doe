@@ -221,6 +221,59 @@ def fit_doe_model(doe_df, output_dir='outputs'):
     return model, results, summary_stats
 
 
+def _clean_label(label):
+    """
+    Clean parameter labels: remove C() notation and format interactions as a*b.
+    
+    Args:
+        label (str): Raw label from statsmodels
+        
+    Returns:
+        str: Cleaned label
+    """
+    # Handle interaction terms: C(A)[T.x]:C(B)[T.y] -> A*B[x,y]
+    if ':' in label:
+        parts = label.split(':')
+        factor1 = parts[0].split('[')[0].replace('C(', '').replace(')', '')
+        factor2 = parts[1].split('[')[0].replace('C(', '').replace(')', '')
+        
+        # Extract level names if present
+        level1 = parts[0].split('[T.')[-1].rstrip(']') if '[T.' in parts[0] else ''
+        level2 = parts[1].split('[T.')[-1].rstrip(']') if '[T.' in parts[1] else ''
+        
+        if level1 and level2:
+            return f"{factor1}*{factor2}[{level1},{level2}]"
+        else:
+            return f"{factor1}*{factor2}"
+    else:
+        # Handle main effect: C(A)[T.x] -> A[x]
+        factor = label.split('[')[0].replace('C(', '').replace(')', '')
+        level = label.split('[T.')[-1].rstrip(']') if '[T.' in label else ''
+        
+        if level:
+            return f"{factor}[{level}]"
+        else:
+            return factor
+
+
+def _clean_formula(formula_str):
+    """
+    Clean model formula: remove C() notation and format interactions as a*b.
+    
+    Args:
+        formula_str (str): Raw formula from statsmodels
+        
+    Returns:
+        str: Cleaned formula
+    """
+    # Replace C(x) with x
+    import re
+    cleaned = re.sub(r'C\(([^)]+)\)', r'\1', formula_str)
+    # Replace : with * for interactions
+    cleaned = cleaned.replace(':', '*')
+    return cleaned
+
+
 def create_doe_report(results, anova_table, param_summary, output_path):
     """
     Create an HTML report with model results, tables, visualizations, and model formula.
@@ -231,8 +284,8 @@ def create_doe_report(results, anova_table, param_summary, output_path):
         param_summary: Parameter summary table
         output_path: Path to output directory
     """
-    # Extract model formula
-    model_formula = str(results.model.formula)
+    # Extract and clean model formula
+    model_formula = _clean_formula(str(results.model.formula))
     
     # Calculate predicted response by Fan Speed Range
     # Extract unique transceiver manufacturers
@@ -286,6 +339,16 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     
     # Convert figure to HTML
     response_plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    # Clean ANOVA table index and columns
+    anova_table_clean = anova_table.copy()
+    anova_table_clean.index = [_clean_label(idx) for idx in anova_table_clean.index]
+    anova_table_html = anova_table_clean.to_html()
+    
+    # Clean parameter summary
+    param_summary_clean = param_summary.copy()
+    param_summary_clean.index = [_clean_label(idx) for idx in param_summary_clean.index]
+    param_summary_html = param_summary_clean.to_html()
     
     # Create summary table
     summary_html = f"""
@@ -359,12 +422,12 @@ def create_doe_report(results, anova_table, param_summary, output_path):
         
         <div class="section">
             <h2>ANOVA Table (Type I - Sequential)</h2>
-            {anova_table.to_html()}
+            {anova_table_html}
         </div>
         
         <div class="section">
             <h2>Parameter Estimates (95% Confidence Interval)</h2>
-            {param_summary.to_html()}
+            {param_summary_html}
         </div>
     </body>
     </html>
