@@ -15,11 +15,12 @@ warnings.filterwarnings('ignore')
 
 def setup_doe_design(balanced_low_df, balanced_high_df):
     """
-    Set up a design of experiments with two factors.
+    Set up a design of experiments with three factors.
     
     Factors:
     - Transceiver_Manufacturer: Nominal (transceiver manufacturer names)
     - Fan_Speed_Range: Categorical (L for low, H for high)
+    - Rack_Unit: Continuous (rack unit position)
     
     Response: Interface_Temp
     
@@ -42,15 +43,21 @@ def setup_doe_design(balanced_low_df, balanced_high_df):
     # Extract unique levels for each factor
     transceiver_mfrs = doe_df['SFP_manufacturer'].unique()
     speed_ranges = ['L', 'H']
+    rack_unit_min = doe_df['rack_unit'].min()
+    rack_unit_max = doe_df['rack_unit'].max()
+    rack_unit_mean = doe_df['rack_unit'].mean()
     
     print("\n" + "="*80)
     print("DESIGN OF EXPERIMENTS SETUP")
     print("="*80)
     print(f"\nFactor Levels:")
-    print(f"  Transceiver Manufacturer: {len(transceiver_mfrs)} levels")
+    print(f"  Transceiver Manufacturer: {len(transceiver_mfrs)} levels (categorical)")
     print(f"    {list(transceiver_mfrs[:5])}... (+{len(transceiver_mfrs)-5} more)")
-    print(f"  Fan Speed Range: {len(speed_ranges)} levels")
+    print(f"  Fan Speed Range: {len(speed_ranges)} levels (categorical)")
     print(f"    {speed_ranges}")
+    print(f"  Rack Unit: Continuous")
+    print(f"    Range: {rack_unit_min:.1f} to {rack_unit_max:.1f}")
+    print(f"    Mean: {rack_unit_mean:.2f}")
     
     print(f"\nResponse Variable: Interface_Temp")
     print(f"Total observations: {len(doe_df)}")
@@ -96,9 +103,12 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
     print("\n" + "="*80)
     print("FULL FACTORIAL DESIGN TABLE")
     print("="*80)
-    print(f"\nTotal Design Runs: {len(design_table)}")
-    print(f"Factors: {len(transceiver_mfrs)} × {len(speed_ranges)}")
-    print(f"\nFirst 20 runs:")
+    print(f"\nCategorical Design:")
+    print(f"  Transceiver Manufacturers: {len(transceiver_mfrs)} levels")
+    print(f"  Fan Speed Range: {len(speed_ranges)} levels")
+    print(f"  Total Design Combinations: {len(design_table)}")
+    print(f"\nContinuous Factor: Rack Unit (observed values from dataset)")
+    print(f"\nFirst 20 runs (Rack Unit varies within each factor combination):")
     print(design_table.head(20).to_string(index=False))
     print(f"\n... ({len(design_table)-20} more runs)")
     print("="*80 + "\n")
@@ -119,10 +129,12 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
         </style>
     </head>
     <body>
-        <h1>Full Factorial Design of Experiments</h1>
-        <p><strong>Total Runs:</strong> {len(design_table)}</p>
-        <p><strong>Factors:</strong> Transceiver Manufacturer × Fan Speed Range</p>
-        <p><strong>Response:</strong> Interface Temperature</p>
+        <h1>Design of Experiments (DOE)</h1>
+        <p><strong>Categorical Factors:</strong> Transceiver Manufacturer × Fan Speed Range</p>
+        <p><strong>Continuous Factor (Covariate):</strong> Rack Unit</p>
+        <p><strong>Total Categorical Design Combinations:</strong> {len(design_table)}</p>
+        <p><strong>Response Variable:</strong> Interface Temperature</p>
+        <p><strong>Model Terms:</strong> Main effects + 2-way interactions</p>
         {html_table}
     </body>
     </html>
@@ -152,11 +164,11 @@ def fit_doe_model(doe_df, output_dir='outputs'):
     output_path.mkdir(exist_ok=True)
     
     # Prepare data for model - encode categorical variables
-    model_df = doe_df[['SFP_manufacturer', 'Fan_Speed_Range', 'Interface_Temp']].copy()
-    model_df.columns = ['Transceiver_Manufacturer', 'Fan_Speed_Range', 'ttemp']
+    model_df = doe_df[['SFP_manufacturer', 'Fan_Speed_Range', 'rack_unit', 'Interface_Temp']].copy()
+    model_df.columns = ['Transceiver_Manufacturer', 'Fan_Speed_Range', 'Rack_Unit', 'ttemp']
     
-    # Fit model: response ~ all factors + two-way interactions
-    formula = 'ttemp ~ C(Transceiver_Manufacturer) + C(Fan_Speed_Range) + C(Transceiver_Manufacturer):C(Fan_Speed_Range)'
+    # Fit model: response ~ categorical factors + continuous factor + interactions
+    formula = 'ttemp ~ C(Transceiver_Manufacturer) + C(Fan_Speed_Range) + Rack_Unit + C(Transceiver_Manufacturer):C(Fan_Speed_Range) + C(Transceiver_Manufacturer):Rack_Unit + C(Fan_Speed_Range):Rack_Unit'
     
     model = ols(formula, data=model_df)
     results = model.fit()
@@ -445,51 +457,80 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     # Create leverage plots for each term
     leverage_plots_html = ""
     try:
-        from statsmodels.graphics.api import plot_partregress_grid
         import matplotlib.pyplot as plt
+        import io
+        import base64
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
         
-        # Get exog data and model terms
-        exog_data = results.model.exog
+        # Get model terms and data
         exog_names = results.model.exog_names
-        
-        # Filter out the intercept and create individual leverage plots
         terms_to_plot = [name for name in exog_names if name != 'const']
         
         if terms_to_plot:
             # Create cleaned names for display
             cleaned_names = [_clean_label(name) for name in terms_to_plot]
             
-            # Create a grid of leverage plots (2x2 or 2x3 depending on number of terms)
-            fig_leverage = plot_partregress_grid(
-                results,
-                fig=None,
-                exog_idx=list(range(1, min(len(terms_to_plot) + 1, 7)))  # Up to 6 plots
-            )
+            # For many terms, create multiple plots in pages (6 plots per page)
+            total_terms = len(terms_to_plot)
+            plots_per_page = 6
+            num_pages = (total_terms + plots_per_page - 1) // plots_per_page
             
-            # Clean up labels and reduce font sizes for readability
-            for idx, ax in enumerate(fig_leverage.get_axes()):
-                ax.tick_params(labelsize=7)
-                ax.xaxis.label.set_fontsize(7)
-                ax.yaxis.label.set_fontsize(7)
-                ax.title.set_fontsize(7)
+            leverage_html_pages = []
+            
+            # Get model data
+            exog = results.model.exog
+            residuals = results.resid
+            leverage = results.get_influence().hat_matrix_diag
+            
+            for page in range(num_pages):
+                start_idx = page * plots_per_page
+                end_idx = min((page + 1) * plots_per_page, total_terms)
+                num_plots = end_idx - start_idx
                 
-                # Set the cleaned label
-                if idx < len(cleaned_names):
-                    ax.set_title(cleaned_names[idx])
+                # Create figure with subplots (2 rows x 3 cols)
+                fig, axes = plt.subplots(2, 3, figsize=(14, 8))
+                axes_flat = axes.flatten()
+                
+                for plot_idx in range(num_plots):
+                    term_idx = start_idx + plot_idx
+                    ax = axes_flat[plot_idx]
+                    
+                    # Get the exog column (add 1 to skip intercept, which is column 0)
+                    col_idx = term_idx + 1
+                    if col_idx < exog.shape[1]:
+                        exog_col = exog[:, col_idx]
+                        
+                        # Create scatter plot of exog vs residuals
+                        ax.scatter(exog_col, residuals, alpha=0.5, s=20, color='steelblue')
+                        ax.axhline(y=0, color='r', linestyle='-', linewidth=1)
+                        ax.set_xlabel('Predictor', fontsize=7)
+                        ax.set_ylabel('Residuals', fontsize=7)
+                        ax.set_title(cleaned_names[term_idx], fontsize=7)
+                        ax.tick_params(labelsize=7)
+                    else:
+                        ax.axis('off')
+                
+                # Hide unused subplots
+                for plot_idx in range(num_plots, 6):
+                    axes_flat[plot_idx].axis('off')
+                
+                plt.tight_layout()
+                
+                # Convert matplotlib figure to HTML
+                buf = io.BytesIO()
+                canvas = FigureCanvasAgg(fig)
+                canvas.print_png(buf)
+                buf.seek(0)
+                img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+                
+                page_html = f'<img src="data:image/png;base64,{img_base64}" style="width: 100%; max-width: 1000px; height: auto;" alt="Leverage Plots Page {page+1}">'
+                if num_pages > 1:
+                    page_html = f'<h4>Plots {start_idx + 1}-{end_idx} of {total_terms}</h4>' + page_html
+                leverage_html_pages.append(page_html)
+                
+                plt.close(fig)
             
-            # Convert matplotlib figure to HTML
-            import io
-            import base64
-            from matplotlib.backends.backend_agg import FigureCanvasAgg
-            
-            buf = io.BytesIO()
-            canvas = FigureCanvasAgg(fig_leverage)
-            canvas.print_png(buf)
-            buf.seek(0)
-            img_base64 = base64.b64encode(buf.read()).decode('utf-8')
-            leverage_plots_html = f'<img src="data:image/png;base64,{img_base64}" style="width: 100%; max-width: 900px; height: auto;" alt="Leverage Plots">'
-            
-            plt.close(fig_leverage)
+            leverage_plots_html = '<br>'.join(leverage_html_pages)
     except Exception as e:
         print(f"Warning: Could not generate leverage plots: {e}")
         leverage_plots_html = f'<p style="color: #666;">Leverage plots could not be generated: {str(e)}</p>'
