@@ -446,6 +446,9 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     cols = cols[:-1] + ['Significance']  # Move Significance to end
     param_summary_clean = param_summary_clean[cols]
     
+    # Sort by p-value (lowest to highest)
+    param_summary_clean = param_summary_clean.sort_values('p-value')
+    
     param_summary_html = param_summary_clean.to_html()
     
     # Create leverage plots for each term
