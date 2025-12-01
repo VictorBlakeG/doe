@@ -427,18 +427,16 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     param_summary_clean = param_summary.copy()
     param_summary_clean.index = [_clean_label(idx) for idx in param_summary_clean.index]
     
-    # Format p-values: convert to decimals without scientific notation, standardize decimal places
+    # Add Significance column BEFORE converting p-values to strings
     alpha_risk = 0.05
-    pvalue_decimals = 6  # Number of decimal places
-    
-    # Format p-values column
-    param_summary_clean['p-value'] = param_summary_clean['p-value'].apply(
-        lambda x: f"{x:.{pvalue_decimals}f}"
+    param_summary_clean['Significance'] = param_summary_clean['p-value'].apply(
+        lambda x: 'Significant' if x < alpha_risk else 'Not Significant'
     )
     
-    # Add Significance column
-    param_summary_clean['Significance'] = param_summary['p-value'].apply(
-        lambda x: 'Significant' if x < alpha_risk else 'Not Significant'
+    # Format p-values: convert to decimals without scientific notation, standardize decimal places
+    pvalue_decimals = 6  # Number of decimal places
+    param_summary_clean['p-value'] = param_summary_clean['p-value'].apply(
+        lambda x: f"{x:.{pvalue_decimals}f}"
     )
     
     # Reorder columns to place Significance at the end
@@ -446,8 +444,11 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     cols = cols[:-1] + ['Significance']  # Move Significance to end
     param_summary_clean = param_summary_clean[cols]
     
-    # Sort by p-value (lowest to highest)
-    param_summary_clean = param_summary_clean.sort_values('p-value')
+    # Sort by p-value (need to use original numeric values, not formatted strings)
+    # Create a temporary numeric column for sorting
+    param_summary_clean['_sort_pvalue'] = param_summary['p-value']
+    param_summary_clean = param_summary_clean.sort_values('_sort_pvalue')
+    param_summary_clean = param_summary_clean.drop('_sort_pvalue', axis=1)
     
     param_summary_html = param_summary_clean.to_html()
     
