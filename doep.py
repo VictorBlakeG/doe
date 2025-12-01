@@ -44,17 +44,17 @@ def main():
     
     # Step 6: SFP Manufacturer clean
     print("Step 6: Transceiver Manufacturer clean...")
-    sfp_counts = clean_tman(mean_fan_df)
-    print("✓ Transceiver manufacturer analysis completed\n")
+    clean_df = clean_tman(mean_fan_df)
+    print("✓ Transceiver manufacturer analysis and consolidation completed\n")
     
     # Step 7: Generate fan speed mean histogram
     print("Step 7: Generating fan speed mean histogram...")
-    html_file = create_fan_speed_histogram(mean_fan_df)
+    html_file = create_fan_speed_histogram(clean_df)
     print(f"✓ Histogram generated: {html_file}\n")
     
     # Step 8: Split fan data by speed threshold
     print("Step 8: Splitting fan data by speed threshold...")
-    fan_low_df, fan_high_df = split_fan(mean_fan_df)
+    fan_low_df, fan_high_df = split_fan(clean_df)
     print(f"✓ Fan data split successfully\n")
     
     # Display counts

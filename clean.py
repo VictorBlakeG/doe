@@ -38,17 +38,16 @@ def analyze_device_vendors(mean_fan_df):
 
 def clean_tman(mean_fan_df):
     """
-    Analyze and display a summary of SFP manufacturer distribution.
+    Clean and analyze SFP manufacturer distribution.
     
-    Counts the number of instances (rows) for each unique SFP manufacturer
-    and displays the results in a formatted table. Consolidates FINISAR variants
-    into a single "Finisar" entry.
+    Consolidates FINISAR variants into a single "Finisar" entry and returns
+    the cleaned dataframe. Also displays a summary of SFP manufacturer distribution.
     
     Args:
         mean_fan_df (pd.DataFrame): DataFrame with 'SFP_manufacturer' column
         
     Returns:
-        pd.Series: Value counts of SFP manufacturers (cleaned)
+        pd.DataFrame: DataFrame with consolidated transceiver manufacturer values
     """
     # Create a copy to avoid modifying the original dataframe
     df_copy = mean_fan_df.copy()
@@ -76,4 +75,4 @@ def clean_tman(mean_fan_df):
     
     print("\n" + "="*80 + "\n")
     
-    return sfp_counts
+    return df_copy
