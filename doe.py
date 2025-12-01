@@ -360,24 +360,27 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     # Create Actual by Predicted plot
     fig_ap = go.Figure()
     
-    # Add confidence interval as shaded area (red)
-    fig_ap.add_trace(go.Scatter(
-        x=predicted_sorted,
-        y=ci_upper_sorted,
-        fill=None,
-        mode='lines',
-        line=dict(color='rgba(0,0,0,0)'),
-        showlegend=False
-    ))
-    
+    # Add lower confidence interval line
     fig_ap.add_trace(go.Scatter(
         x=predicted_sorted,
         y=ci_lower_sorted,
+        fill=None,
+        mode='lines',
+        line=dict(color='red', width=1),
+        name='95% CI Lower',
+        showlegend=False
+    ))
+    
+    # Add upper confidence interval line with fill (red shaded area)
+    fig_ap.add_trace(go.Scatter(
+        x=predicted_sorted,
+        y=ci_upper_sorted,
         fill='tonexty',
         mode='lines',
-        line=dict(color='rgba(0,0,0,0)'),
+        line=dict(color='red', width=1),
         fillcolor='rgba(255,0,0,0.2)',
-        name='95% Confidence Interval'
+        name='95% Confidence Interval',
+        showlegend=True
     ))
     
     # Add actual data points (black)
@@ -385,8 +388,9 @@ def create_doe_report(results, anova_table, param_summary, output_path):
         x=predicted,
         y=actual,
         mode='markers',
-        marker=dict(color='black', size=4, opacity=0.5),
-        name='Actual Data Points'
+        marker=dict(color='black', size=4, opacity=0.6),
+        name='Actual Data Points',
+        showlegend=True
     ))
     
     # Add diagonal reference line (perfect prediction)
