@@ -423,9 +423,29 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     anova_table_clean.index = [_clean_label(idx) for idx in anova_table_clean.index]
     anova_table_html = anova_table_clean.to_html()
     
-    # Clean parameter summary
+    # Clean parameter summary and format p-values
     param_summary_clean = param_summary.copy()
     param_summary_clean.index = [_clean_label(idx) for idx in param_summary_clean.index]
+    
+    # Format p-values: convert to decimals without scientific notation, standardize decimal places
+    alpha_risk = 0.05
+    pvalue_decimals = 6  # Number of decimal places
+    
+    # Format p-values column
+    param_summary_clean['p-value'] = param_summary_clean['p-value'].apply(
+        lambda x: f"{x:.{pvalue_decimals}f}"
+    )
+    
+    # Add Significance column
+    param_summary_clean['Significance'] = param_summary['p-value'].apply(
+        lambda x: 'Significant' if x < alpha_risk else 'Not Significant'
+    )
+    
+    # Reorder columns to place Significance at the end
+    cols = list(param_summary_clean.columns)
+    cols = cols[:-1] + ['Significance']  # Move Significance to end
+    param_summary_clean = param_summary_clean[cols]
+    
     param_summary_html = param_summary_clean.to_html()
     
     # Create leverage plots for each term
