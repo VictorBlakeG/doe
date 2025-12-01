@@ -5,6 +5,7 @@ from importcsv import load_csv_data, show_data_summary, remove_missing_data
 from prep import calculate_fan_speed_mean, create_fan_speed_histogram
 from split import split_fan
 from clean import analyze_device_vendors, clean_tman
+from export import export_fan_dfs_to_csv
 
 
 def main():
@@ -59,6 +60,12 @@ def main():
     print(f"High speed fans (>= 12000):  {len(fan_high_df):,} rows")
     print(f"Total:                       {len(fan_low_df) + len(fan_high_df):,} rows")
     print("================================================================================\n")
+    
+    # Step 9: Export fan dataframes to CSV
+    print("Step 9: Exporting fan dataframes to CSV...")
+    low_csv_path, high_csv_path = export_fan_dfs_to_csv(fan_low_df, fan_high_df)
+    print(f"✓ Low speed fan data exported: {low_csv_path}")
+    print(f"✓ High speed fan data exported: {high_csv_path}\n")
     
     print("Data processing pipeline completed!")
     print(f"Final dataframe has {len(mean_fan_df)} rows\n")
