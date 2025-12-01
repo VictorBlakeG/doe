@@ -442,6 +442,9 @@ def create_doe_report(results, anova_table, param_summary, output_path):
         terms_to_plot = [name for name in exog_names if name != 'const']
         
         if terms_to_plot:
+            # Create cleaned names for display
+            cleaned_names = [_clean_label(name) for name in terms_to_plot]
+            
             # Create a grid of leverage plots (2x2 or 2x3 depending on number of terms)
             fig_leverage = plot_partregress_grid(
                 results,
@@ -449,12 +452,16 @@ def create_doe_report(results, anova_table, param_summary, output_path):
                 exog_idx=list(range(1, min(len(terms_to_plot) + 1, 7)))  # Up to 6 plots
             )
             
-            # Reduce font sizes for readability
-            for ax in fig_leverage.get_axes():
-                ax.tick_params(labelsize=6)
+            # Clean up labels and reduce font sizes for readability
+            for idx, ax in enumerate(fig_leverage.get_axes()):
+                ax.tick_params(labelsize=7)
                 ax.xaxis.label.set_fontsize(7)
                 ax.yaxis.label.set_fontsize(7)
-                ax.title.set_fontsize(8)
+                ax.title.set_fontsize(7)
+                
+                # Set the cleaned label
+                if idx < len(cleaned_names):
+                    ax.set_title(cleaned_names[idx])
             
             # Convert matplotlib figure to HTML
             import io
