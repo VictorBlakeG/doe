@@ -263,7 +263,7 @@ def _clean_label(label):
 
 def _clean_formula(formula_str):
     """
-    Clean model formula: remove C() notation and format interactions as a*b.
+    Clean model formula: format interactions as * instead of :, keep C() notation for categorical variables.
     
     Args:
         formula_str (str): Raw formula from statsmodels
@@ -271,11 +271,9 @@ def _clean_formula(formula_str):
     Returns:
         str: Cleaned formula
     """
-    # Replace C(x) with x
+    # Keep C() notation but replace : with * for interactions
     import re
-    cleaned = re.sub(r'C\(([^)]+)\)', r'\1', formula_str)
-    # Replace : with * for interactions
-    cleaned = cleaned.replace(':', '*')
+    cleaned = formula_str.replace(':', '*')
     return cleaned
 
 
@@ -289,8 +287,25 @@ def create_doe_report(results, anova_table, param_summary, output_path):
         param_summary: Parameter summary table
         output_path: Path to output directory
     """
-    # Extract and clean model formula
-    model_formula = _clean_formula(str(results.model.formula))
+    # Extract and clean model formula (symbolic form)
+    symbolic_formula = _clean_formula(str(results.model.formula))
+    
+    # Create expanded formula showing all parameters with coefficients
+    exog_names = results.model.exog_names
+    cleaned_names = [_clean_label(name) for name in exog_names]
+    coefficients = results.params.values
+    
+    # Build the formula with coefficients
+    formula_terms = []
+    for name, coef in zip(cleaned_names, coefficients):
+        if name == 'Intercept':
+            formula_terms.append(f"{coef:.6f}")
+        else:
+            sign = "+" if coef >= 0 else "-"
+            formula_terms.append(f"{sign} ({abs(coef):.6f})*{name}")
+    
+    # Create the expanded formula
+    model_formula = "ttemp = " + " ".join(formula_terms)
     
     # Calculate predicted response by Fan Speed Range
     # Extract unique transceiver manufacturers
