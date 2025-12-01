@@ -432,6 +432,7 @@ def create_doe_report(results, anova_table, param_summary, output_path):
     leverage_plots_html = ""
     try:
         from statsmodels.graphics.api import plot_partregress_grid
+        import matplotlib.pyplot as plt
         
         # Get exog data and model terms
         exog_data = results.model.exog
@@ -448,6 +449,13 @@ def create_doe_report(results, anova_table, param_summary, output_path):
                 exog_idx=list(range(1, min(len(terms_to_plot) + 1, 7)))  # Up to 6 plots
             )
             
+            # Reduce font sizes for readability
+            for ax in fig_leverage.get_axes():
+                ax.tick_params(labelsize=8)
+                ax.xaxis.label.set_fontsize(9)
+                ax.yaxis.label.set_fontsize(9)
+                ax.title.set_fontsize(10)
+            
             # Convert matplotlib figure to HTML
             import io
             import base64
@@ -460,7 +468,6 @@ def create_doe_report(results, anova_table, param_summary, output_path):
             img_base64 = base64.b64encode(buf.read()).decode('utf-8')
             leverage_plots_html = f'<img src="data:image/png;base64,{img_base64}" style="width: 100%; max-width: 900px; height: auto;" alt="Leverage Plots">'
             
-            import matplotlib.pyplot as plt
             plt.close(fig_leverage)
     except Exception as e:
         print(f"Warning: Could not generate leverage plots: {e}")
