@@ -68,7 +68,12 @@ def setup_doe_design(balanced_low_df, balanced_high_df):
 
 def create_full_factorial_design(doe_df, output_dir='outputs'):
     """
-    Create a full-factorial design and display design table.
+    Create a full-factorial design with discrete rack_unit factor (integer increments 1-42).
+    
+    Design includes all combinations of:
+    - Transceiver Manufacturer (10 levels)
+    - Rack Unit (42 discrete values: 1-42)
+    - Fan Speed Range (L, H)
     
     Args:
         doe_df (pd.DataFrame): Design dataframe from setup_doe_design
@@ -84,33 +89,41 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
     transceiver_mfrs = sorted(doe_df['SFP_manufacturer'].unique())
     speed_ranges = ['L', 'H']
     
-    # Create full factorial design
+    # Create discrete rack_unit levels as integers from 1 to 42
+    rack_units = list(range(1, 43))  # Integer increments 1 through 42
+    
+    # Create full factorial design with all combinations
     design_rows = []
     run_number = 1
     
     for tman in transceiver_mfrs:
-        for speed in speed_ranges:
-            design_rows.append({
-                'Run': run_number,
-                'Transceiver_Manufacturer': tman,
-                'Fan_Speed_Range': speed
-            })
-            run_number += 1
+        for rack_unit in rack_units:
+            for speed in speed_ranges:
+                design_rows.append({
+                    'Run': run_number,
+                    'Transceiver_Manufacturer': tman,
+                    'Rack_Unit': rack_unit,
+                    'Fan_Speed_Range': speed
+                })
+                run_number += 1
     
     design_table = pd.DataFrame(design_rows)
     
-    # Display design table
+    # Display design summary
+    total_runs = len(transceiver_mfrs) * len(rack_units) * len(speed_ranges)
     print("\n" + "="*80)
     print("FULL FACTORIAL DESIGN TABLE")
     print("="*80)
-    print(f"\nCategorical Design:")
+    print(f"\nDesign Factors (All Discrete/Categorical):")
     print(f"  Transceiver Manufacturers: {len(transceiver_mfrs)} levels")
-    print(f"  Fan Speed Range: {len(speed_ranges)} levels")
-    print(f"  Total Design Combinations: {len(design_table)}")
-    print(f"\nContinuous Factor: Rack Unit (observed values from dataset)")
-    print(f"\nFirst 20 runs (Rack Unit varies within each factor combination):")
-    print(design_table.head(20).to_string(index=False))
-    print(f"\n... ({len(design_table)-20} more runs)")
+    print(f"  Rack Unit: {len(rack_units)} discrete levels (integer: 1-42)")
+    print(f"  Fan Speed Range: {len(speed_ranges)} levels (L, H)")
+    print(f"\nTotal Design Runs: {total_runs}")
+    print(f"  ({len(transceiver_mfrs)} × {len(rack_units)} × {len(speed_ranges)})")
+    print(f"\nDesign Runs (First 30):")
+    print(design_table.head(30).to_string(index=False))
+    if len(design_table) > 30:
+        print(f"\n... ({len(design_table)-30} more runs)")
     print("="*80 + "\n")
     
     # Save design table as HTML
@@ -122,19 +135,32 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
         <style>
             body {{ font-family: Arial, sans-serif; margin: 20px; }}
             h1 {{ color: #333; }}
+            h2 {{ color: #666; margin-top: 30px; }}
             table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
             th {{ background-color: #4CAF50; color: white; padding: 10px; text-align: left; }}
-            td {{ border: 1px solid #ddd; padding: 8px; }}
+            td {{ border: 1px solid #ddd; padding: 8px; text-align: center; }}
             tr:nth-child(even) {{ background-color: #f2f2f2; }}
+            .factor-info {{ background-color: #e8f5e9; padding: 10px; border-radius: 5px; margin: 10px 0; }}
         </style>
     </head>
     <body>
-        <h1>Design of Experiments (DOE)</h1>
-        <p><strong>Categorical Factors:</strong> Transceiver Manufacturer × Fan Speed Range</p>
-        <p><strong>Continuous Factor (Covariate):</strong> Rack Unit</p>
-        <p><strong>Total Categorical Design Combinations:</strong> {len(design_table)}</p>
-        <p><strong>Response Variable:</strong> Interface Temperature</p>
-        <p><strong>Model Terms:</strong> Main effects + 2-way interactions</p>
+        <h1>Design of Experiments (DOE) - Full Factorial Design</h1>
+        
+        <h2>Design Structure</h2>
+        <div class="factor-info">
+            <p><strong>All factors are treated as discrete/categorical:</strong></p>
+            <ul>
+                <li><strong>Transceiver Manufacturer:</strong> {len(transceiver_mfrs)} discrete levels</li>
+                <li><strong>Rack Unit:</strong> {len(rack_units)} discrete levels (integer values: 1 through 42)</li>
+                <li><strong>Fan Speed Range:</strong> {len(speed_ranges)} discrete levels (L=Low, H=High)</li>
+            </ul>
+            <p><strong>Total Design Combinations:</strong> {total_runs} factorial runs</p>
+            <p><strong>Response Variable:</strong> Interface Temperature</p>
+            <p><strong>Model Terms:</strong> Main effects + 2-way and 3-way interactions</p>
+        </div>
+        
+        <h2>Design Table</h2>
+        <p><em>Showing all {total_runs} runs. Each row represents one test condition.</em></p>
         {html_table}
     </body>
     </html>
@@ -151,10 +177,15 @@ def create_full_factorial_design(doe_df, output_dir='outputs'):
 
 def fit_doe_model(doe_df, output_dir='outputs'):
     """
-    Fit a full-factorial model with main effects and two-way interactions.
+    Fit a full-factorial model with discrete factors and lack-of-fit test using duplicate observations.
+    
+    Treats all factors as categorical:
+    - Transceiver_Manufacturer: 10 levels
+    - Rack_Unit: 42 discrete levels (1-42)
+    - Fan_Speed_Range: 2 levels (L, H)
     
     Args:
-        doe_df (pd.DataFrame): Design dataframe
+        doe_df (pd.DataFrame): Design dataframe with observations
         output_dir (str): Directory for output files
         
     Returns:
@@ -167,14 +198,21 @@ def fit_doe_model(doe_df, output_dir='outputs'):
     model_df = doe_df[['SFP_manufacturer', 'Fan_Speed_Range', 'rack_unit', 'Interface_Temp']].copy()
     model_df.columns = ['Transceiver_Manufacturer', 'Fan_Speed_Range', 'Rack_Unit', 'ttemp']
     
-    # Fit model: response ~ categorical factors + continuous factor + interactions
-    formula = 'ttemp ~ C(Transceiver_Manufacturer) + C(Fan_Speed_Range) + Rack_Unit + C(Transceiver_Manufacturer):C(Fan_Speed_Range) + C(Transceiver_Manufacturer):Rack_Unit + C(Fan_Speed_Range):Rack_Unit'
+    # Convert Rack_Unit to integer for categorical treatment
+    model_df['Rack_Unit'] = model_df['Rack_Unit'].astype(int)
+    
+    # Fit model with all factors as categorical
+    # Formula: response ~ manufacturer + rack_unit + speed + all interactions
+    formula = 'ttemp ~ C(Transceiver_Manufacturer) + C(Rack_Unit) + C(Fan_Speed_Range) + C(Transceiver_Manufacturer):C(Rack_Unit) + C(Transceiver_Manufacturer):C(Fan_Speed_Range) + C(Rack_Unit):C(Fan_Speed_Range) + C(Transceiver_Manufacturer):C(Rack_Unit):C(Fan_Speed_Range)'
     
     model = ols(formula, data=model_df)
     results = model.fit()
     
     # Extract ANOVA table using Type I (sequential)
     anova_table = sm.stats.anova_lm(results, typ=1)
+    
+    # Calculate lack-of-fit test using replicate observations
+    lof_table = _calculate_lack_of_fit(model_df, results, anova_table)
     
     print("\n" + "="*80)
     print("DESIGN OF EXPERIMENTS MODEL FIT RESULTS")
@@ -190,6 +228,11 @@ def fit_doe_model(doe_df, output_dir='outputs'):
     
     print("\nANOVA Table (Type I - Sequential):")
     print(anova_table.to_string())
+    
+    print("\n" + "="*80)
+    print("LACK-OF-FIT TEST (Using Duplicate Observations)")
+    print("="*80)
+    print(lof_table.to_string())
     
     print("\n" + "="*80)
     print("PARAMETER ESTIMATES (95% Confidence Interval)")
@@ -214,6 +257,7 @@ def fit_doe_model(doe_df, output_dir='outputs'):
         'f_statistic': results.fvalue,
         'f_pvalue': results.f_pvalue,
         'anova_table': anova_table,
+        'lof_table': lof_table,
         'params': results.params,
         'pvalues': results.pvalues,
         'param_summary': param_summary,
@@ -221,7 +265,83 @@ def fit_doe_model(doe_df, output_dir='outputs'):
     }
     
     # Create HTML report
-    create_doe_report(results, anova_table, param_summary, output_path)
+    create_doe_report(results, anova_table, param_summary, lof_table, output_path)
+    
+    return model, results, summary_stats
+
+
+def _calculate_lack_of_fit(model_df, results, anova_table):
+    """
+    Calculate lack-of-fit test using pure error from replicate observations.
+    
+    Partitions residual sum of squares into:
+    - Pure Error: variation among replicates at same factor level combinations
+    - Lack of Fit: deviation from model beyond pure error
+    
+    Args:
+        model_df (pd.DataFrame): Model data with predictors and response
+        results: Fitted regression results
+        anova_table: Original ANOVA table
+        
+    Returns:
+        pd.DataFrame: Lack-of-fit ANOVA table
+    """
+    # Group by factor combinations to identify replicates
+    group_cols = ['Transceiver_Manufacturer', 'Rack_Unit', 'Fan_Speed_Range']
+    grouped = model_df.groupby(group_cols, observed=True)
+    
+    # Calculate pure error (variation within factor combinations with replicates)
+    pure_error_ss = 0
+    pure_error_df = 0
+    num_replicates = 0
+    
+    for name, group in grouped:
+        n_group = len(group)
+        if n_group > 1:  # Only consider groups with replicates
+            group_mean = group['ttemp'].mean()
+            pure_error_ss += ((group['ttemp'] - group_mean) ** 2).sum()
+            pure_error_df += (n_group - 1)
+            num_replicates += n_group
+    
+    # Get residual information from fitted model
+    residual_ss = results.ssr  # Sum of squared residuals
+    residual_df = results.df_resid
+    
+    # Calculate lack-of-fit
+    lof_ss = residual_ss - pure_error_ss if pure_error_ss > 0 else residual_ss
+    lof_df = residual_df - pure_error_df if pure_error_ss > 0 else residual_df
+    
+    # Calculate mean squares
+    pure_error_ms = pure_error_ss / pure_error_df if pure_error_df > 0 else 0
+    lof_ms = lof_ss / lof_df if lof_df > 0 else 0
+    
+    # F-ratio and p-value for lack-of-fit
+    lof_f = lof_ms / pure_error_ms if pure_error_ms > 0 else 0
+    lof_pvalue = 1 - sm.stats.f.cdf(lof_f, lof_df, pure_error_df) if lof_f > 0 else 1.0
+    
+    # Create LOF table
+    lof_data = {
+        'Source': ['Lack of Fit', 'Pure Error', 'Total Error'],
+        'df': [lof_df, pure_error_df, residual_df],
+        'sum_sq': [lof_ss, pure_error_ss, residual_ss],
+        'mean_sq': [lof_ms, pure_error_ms, residual_ss/residual_df],
+        'F': [lof_f, np.nan, np.nan],
+        'PR(>F)': [lof_pvalue, np.nan, np.nan]
+    }
+    
+    lof_table = pd.DataFrame(lof_data)
+    
+    # Add summary statistics
+    print(f"\nDuplicate Observations Analysis:")
+    print(f"  Total observations: {len(model_df)}")
+    print(f"  Factor combinations with replicates: {num_replicates}")
+    print(f"  Pure Error df: {pure_error_df}")
+    print(f"  Pure Error SS: {pure_error_ss:.4f}")
+    if lof_f > 0:
+        print(f"  LOF F-statistic: {lof_f:.4f}")
+        print(f"  LOF p-value: {lof_pvalue:.6f}")
+    
+    return lof_table
     
     return model, results, summary_stats
 
@@ -277,7 +397,7 @@ def _clean_formula(formula_str):
     return cleaned
 
 
-def create_doe_report(results, anova_table, param_summary, output_path):
+def create_doe_report(results, anova_table, param_summary, lof_table, output_path):
     """
     Create an HTML report with model results, tables, visualizations, and model formula.
     
@@ -285,6 +405,7 @@ def create_doe_report(results, anova_table, param_summary, output_path):
         results: Statsmodels regression results
         anova_table: ANOVA results
         param_summary: Parameter summary table
+        lof_table: Lack-of-fit ANOVA table
         output_path: Path to output directory
     """
     # Extract and clean model formula (symbolic form)

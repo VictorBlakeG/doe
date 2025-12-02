@@ -48,7 +48,7 @@ def create_fan_hl_histogram(balanced_low_df, balanced_high_df, output_dir='outpu
     # Create subplots
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=('Low Speed Fans (< 11999)', 'High Speed Fans (>= 12000)'),
+        subplot_titles=('Low (< 9999 rpm)', 'High (>= 10,000 rpm)'),
         specs=[[{'secondary_y': False}, {'secondary_y': False}]]
     )
     
@@ -188,7 +188,7 @@ def create_ttemp_hl_histogram(balanced_low_df, balanced_high_df, output_dir='out
     # Create subplots
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=('Low Speed Fans (< 11999)', 'High Speed Fans (>= 12000)'),
+        subplot_titles=('Low (< 9999 rpm)', 'High (>= 10,000 rpm)'),
         specs=[[{'secondary_y': False}, {'secondary_y': False}]]
     )
     

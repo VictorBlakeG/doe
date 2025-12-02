@@ -8,8 +8,10 @@ def load_csv_data():
     Returns:
         pd.DataFrame: The raw data from the CSV file
     """
+    filepath = "data"
     filename = "iad12_clean.csv"
-    csv_raw_df = pd.read_csv(filename)
+    fullname = f"{filepath}/{filename}"
+    csv_raw_df = pd.read_csv(fullname)
     return csv_raw_df
 
 
