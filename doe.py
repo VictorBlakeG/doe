@@ -1266,7 +1266,8 @@ def convert_html_to_pdf(output_dir='outputs'):
     Returns:
         dict: Conversion status for each file
     """
-    from pdf_generator_enhanced import create_design_summary_pdf, create_analysis_summary_pdf, create_reduced_model_pdf_with_visuals
+    from pdf_generator_enhanced import create_design_summary_pdf, create_analysis_summary_pdf
+    from pdf_generator_plotly import create_reduced_model_pdf_enhanced
     
     output_path = Path(output_dir)
     
@@ -1311,8 +1312,8 @@ def convert_html_to_pdf(output_dir='outputs'):
             reduced_html_path = output_path / 'doe_analysis_reduced.html'
             if reduced_html_path.exists():
                 pdf_path = output_path / 'doe_analysis_reduced_summary.pdf'
-                # Use enhanced PDF generator with image extraction
-                create_reduced_model_pdf_with_visuals(str(pdf_path), str(reduced_html_path))
+                # Use enhanced PDF generator with Plotly chart and custom layout
+                create_reduced_model_pdf_enhanced(str(pdf_path), str(reduced_html_path))
                 pdf_size = pdf_path.stat().st_size / (1024 * 1024)
                 print(f"✓ doe_analysis_reduced_summary.pdf ({pdf_size:.3f} MB)")
                 conversion_status['doe_analysis_reduced.html'] = 'success'
