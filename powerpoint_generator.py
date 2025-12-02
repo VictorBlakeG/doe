@@ -3,6 +3,7 @@ PowerPoint generator for DOE analysis reports.
 Creates professional .pptx presentations with analysis results, visualizations, and tables.
 """
 import re
+import json
 from pathlib import Path
 from io import BytesIO
 import base64
@@ -23,13 +24,68 @@ except ImportError:
     PPTX_AVAILABLE = False
 
 
-def extract_base64_images_from_html(html_path, max_images=10):
+def extract_model_diagram_image(html_path):
+    """
+    Extract and render the Actual by Predicted plot from HTML using Plotly.
+    
+    Args:
+        html_path (str): Path to HTML file
+        
+    Returns:
+        BytesIO: Image BytesIO object or None if extraction fails
+    """
+    try:
+        with open(html_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Extract Plotly figure data from HTML
+        # Look for the figure definition in the HTML script
+        import re
+        import json
+        
+        # Find the plotly figure definition
+        pattern = r'Plotly\.newPlot\([^,]*,\s*(\[.*?\]),\s*(\{.*?\}),\s*(\{.*?\})\s*\)'
+        match = re.search(pattern, html_content, re.DOTALL)
+        
+        if not match:
+            print("  ! Could not find Plotly figure in HTML")
+            return None
+        
+        try:
+            # Extract the data, layout, and config from the match
+            data_str = match.group(1)
+            layout_str = match.group(2)
+            config_str = match.group(3)
+            
+            # Parse JSON strings
+            data = json.loads(data_str)
+            layout = json.loads(layout_str)
+            
+            # Create Plotly figure
+            fig = go.Figure(data=data, layout=layout)
+            
+            # Render to image
+            image_bytes = to_image(fig, format='png', width=800, height=600)
+            image_io = BytesIO(image_bytes)
+            return image_io
+            
+        except Exception as e:
+            print(f"  ! Error parsing Plotly figure: {e}")
+            return None
+            
+    except Exception as e:
+        print(f"  ! Error extracting model diagram: {e}")
+        return None
+
+
+def extract_base64_images_from_html(html_path, max_images=10, skip_first=True):
     """
     Extract base64-encoded images from HTML file.
     
     Args:
         html_path (str): Path to HTML file
         max_images (int): Maximum number of images to extract
+        skip_first (bool): Skip first image (which is usually the model fit diagram)
         
     Returns:
         list: List of image BytesIO objects
@@ -42,8 +98,12 @@ def extract_base64_images_from_html(html_path, max_images=10):
         images = []
         
         # Find all img tags with base64 data
+        start_idx = 1 if skip_first else 0
+        img_count = 0
         for idx, img_tag in enumerate(soup.find_all('img')):
-            if idx >= max_images:
+            if idx < start_idx:
+                continue
+            if img_count >= max_images:
                 break
                 
             src = img_tag.get('src', '')
@@ -54,6 +114,7 @@ def extract_base64_images_from_html(html_path, max_images=10):
                     image_bytes = base64.b64decode(base64_data)
                     image_io = BytesIO(image_bytes)
                     images.append(image_io)
+                    img_count += 1
                 except Exception as e:
                     print(f"Warning: Could not extract image {idx}: {e}")
         
@@ -265,7 +326,7 @@ def add_image_to_slide(slide, image_source, left=Inches(1), top=Inches(1.4), wid
 def create_full_model_powerpoint(html_path, output_path, title="DOE Full Model Analysis"):
     """
     Create a PowerPoint presentation from full model HTML report with specific slide order:
-    1. Model fit graphs (Actual vs Predicted)
+    1. Model fit graphs (Actual vs Predicted with confidence intervals)
     2. Model equation
     3. Full vs Reduced model comparison table
     4. ANOVA table
@@ -293,16 +354,22 @@ def create_full_model_powerpoint(html_path, output_path, title="DOE Full Model A
         # Title slide
         create_title_slide(prs, title, "Design of Experiments Analysis")
         
-        # Extract content from HTML
-        images = extract_base64_images_from_html(html_path, max_images=150)
+        # Extract model diagram image first
+        print("  Extracting model diagram image...")
+        model_diagram = extract_model_diagram_image(html_path)
+        
+        # Extract other content from HTML (skip first image which is model diagram)
+        images = extract_base64_images_from_html(html_path, max_images=150, skip_first=True)
         tables = extract_html_tables(html_path)
         
-        print(f"Extracted {len(images)} images and {len(tables)} tables from HTML")
+        print(f"Extracted model diagram and {len(images)} leverage plot images, {len(tables)} tables from HTML")
         
-        # SLIDE 1: Model Fit Graph (first image is typically the model fit diagram)
-        if len(images) > 0:
-            create_content_slide(prs, "Model Fit Diagram", "image", images[0])
-            print("  ✓ Added Model Fit Diagram slide")
+        # SLIDE 1: Model Fit Graph with Confidence Intervals
+        if model_diagram is not None:
+            create_content_slide(prs, "Model Fit Diagram", "image", model_diagram)
+            print("  ✓ Added Model Fit Diagram slide (Actual vs Predicted with 95% CI)")
+        else:
+            print("  ✗ Could not extract model fit diagram")
         
         # SLIDE 2: Model Equation (text slide)
         model_eq_text = """Model Equation:
@@ -389,9 +456,9 @@ Response Variable: Interface_Temp
             create_content_slide(prs, "Parameter Table (Sorted by P-value, Low to High)", "table", param_display)
             print("  ✓ Added Parameter Table slide")
         
-        # SLIDE 7+: Leverage Plots (remaining images)
+        # SLIDE 7+: Leverage Plots (all leverage plot images)
         leverage_count = 0
-        for idx, image_io in enumerate(images[1:]):  # Skip first image (fit diagram)
+        for idx, image_io in enumerate(images):
             if leverage_count > 50:  # Limit leverage plots to 50
                 break
             
@@ -416,7 +483,7 @@ Response Variable: Interface_Temp
 def create_reduced_model_powerpoint(html_path, output_path, title="DOE Reduced Model Analysis"):
     """
     Create a PowerPoint presentation from reduced model HTML report with specific slide order:
-    1. Model fit graphs (Actual vs Predicted)
+    1. Model fit graphs (Actual vs Predicted with confidence intervals)
     2. Model equation
     3. Full vs Reduced model comparison table
     4. ANOVA table
@@ -444,16 +511,22 @@ def create_reduced_model_powerpoint(html_path, output_path, title="DOE Reduced M
         # Title slide
         create_title_slide(prs, title, "Design of Experiments - Reduced Model")
         
-        # Extract content from HTML
-        images = extract_base64_images_from_html(html_path, max_images=150)
+        # Extract model diagram image first
+        print("  Extracting model diagram image...")
+        model_diagram = extract_model_diagram_image(html_path)
+        
+        # Extract other content from HTML (skip first image which is model diagram)
+        images = extract_base64_images_from_html(html_path, max_images=150, skip_first=True)
         tables = extract_html_tables(html_path)
         
-        print(f"Extracted {len(images)} images and {len(tables)} tables from HTML")
+        print(f"Extracted model diagram and {len(images)} leverage plot images, {len(tables)} tables from HTML")
         
-        # SLIDE 1: Model Fit Graph (first image is typically the model fit diagram)
-        if len(images) > 0:
-            create_content_slide(prs, "Model Fit Diagram", "image", images[0])
-            print("  ✓ Added Model Fit Diagram slide")
+        # SLIDE 1: Model Fit Graph with Confidence Intervals
+        if model_diagram is not None:
+            create_content_slide(prs, "Model Fit Diagram", "image", model_diagram)
+            print("  ✓ Added Model Fit Diagram slide (Actual vs Predicted with 95% CI)")
+        else:
+            print("  ✗ Could not extract model fit diagram")
         
         # SLIDE 2: Model Equation (text slide)
         model_eq_text = """Model Equation (Reduced):
@@ -538,9 +611,9 @@ Response Variable: Interface_Temp
             create_content_slide(prs, "Parameter Table (Sorted by P-value, Low to High)", "table", param_display)
             print("  ✓ Added Parameter Table slide")
         
-        # SLIDE 7+: Leverage Plots (remaining images)
+        # SLIDE 7+: Leverage Plots (all leverage plot images)
         leverage_count = 0
-        for idx, image_io in enumerate(images[1:]):  # Skip first image (fit diagram)
+        for idx, image_io in enumerate(images):
             if leverage_count > 50:  # Limit leverage plots to 50
                 break
             
