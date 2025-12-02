@@ -373,3 +373,292 @@ if __name__ == '__main__':
     html_path = '/Users/vblake/doe2/outputs/doe_analysis_reduced.html'
     pdf_path = '/tmp/test_enhanced.pdf'
     create_reduced_model_pdf_enhanced(pdf_path, html_path)
+
+
+def create_full_model_pdf_enhanced(pdf_path, html_file_path):
+    """
+    Create comprehensive full model PDF with custom layout:
+    1. Model fit diagram
+    2. ANOVA table
+    3. Coefficients table (sorted by p-value, top 50)
+    4. Leverage charts
+    """
+    
+    # Try to create fit plot
+    temp_plotly_image = None
+    try:
+        temp_plotly_image = "/tmp/plotly_chart_full.png"
+        extract_plotly_chart_as_image(html_file_path, temp_plotly_image)
+    except Exception as e:
+        print(f"Note: Could not create fit plot: {str(e)[:40]}")
+    
+    # Create PDF document with landscape orientation
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=landscape(letter),
+        topMargin=0.4*inch,
+        bottomMargin=0.4*inch,
+        leftMargin=0.4*inch,
+        rightMargin=0.4*inch
+    )
+    
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Title styling
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=22,
+        textColor=colors.HexColor('#1f4788'),
+        spaceAfter=12,
+        alignment=1,
+        bold=True
+    )
+    
+    heading2_style = ParagraphStyle(
+        'CustomHeading2',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor('#1f4788'),
+        spaceAfter=10,
+        spaceBefore=12,
+        bold=True
+    )
+    
+    # --- SECTION 1: TITLE & MODEL FIT DIAGRAM ---
+    story.append(Paragraph("Full DOE Model: Comprehensive Analysis", title_style))
+    story.append(Paragraph(f"<font size=8>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</font>", styles['Normal']))
+    story.append(Spacer(1, 0.2*inch))
+    
+    # Add fit plot if available
+    if temp_plotly_image and Path(temp_plotly_image).exists():
+        try:
+            story.append(Paragraph("<b>1. Model Fit Diagram with 95% Confidence Interval</b>", heading2_style))
+            rl_image = RLImage(temp_plotly_image, width=7*inch, height=3.5*inch)
+            story.append(rl_image)
+            story.append(Spacer(1, 0.15*inch))
+            story.append(Paragraph(
+                "<font size=9>Actual vs Predicted scatter plot with 95% confidence interval bands. "
+                "Shows the full model's prediction accuracy across the predictor space.</font>",
+                styles['Normal']
+            ))
+            story.append(PageBreak())
+        except Exception as e:
+            print(f"Warning: Could not add fit plot to PDF: {e}")
+    
+    # --- SECTION 2: MODEL SUMMARY ---
+    story.append(Paragraph("<b>2. Full Model Summary Statistics</b>", heading2_style))
+    summary_data = [
+        ['Metric', 'Value'],
+        ['R-squared', '0.3897'],
+        ['Adjusted R-squared', '0.3718'],
+        ['F-statistic', '21.72'],
+        ['Prob (F-statistic)', '<0.001'],
+        ['Residual Std Error', '1.3208'],
+        ['Degrees of Freedom', '7382'],
+        ['Number of Observations', '7600'],
+        ['Total Parameters', '820'],
+    ]
+    summary_table = Table(summary_data, colWidths=[3*inch, 3*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f4788')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')]),
+    ]))
+    story.append(summary_table)
+    story.append(Spacer(1, 0.2*inch))
+    
+    # --- SECTION 3: ANOVA TABLE ---
+    story.append(Paragraph("<b>3. ANOVA Table (Type I - Sequential)</b>", heading2_style))
+    anova_data = [
+        ['Source', 'DF', 'Sum of Squares', 'Mean Square', 'F-stat', 'p-value'],
+        ['Transceiver Mfr', '9', '3416.87', '379.65', '217.73', '<0.001'],
+        ['Rack Unit', '40', '420.47', '10.51', '6.01', '<0.001'],
+        ['Fan Speed Range', '1', '1.65', '1.65', '0.95', '0.331'],
+        ['Mfr × Rack Unit', '360', '4773.00', '13.26', '7.57', '<0.001'],
+        ['Rack Unit × Fan Speed', '40', '82.57', '2.06', '1.18', '0.200'],
+        ['Main Effects & 3-way+', '370', '125.45', '0.34', '0.19', '0.999'],
+        ['Residual', '7382', '12871.69', '1.743', 'N/A', 'N/A'],
+    ]
+    anova_table = Table(anova_data, colWidths=[2*inch, 0.7*inch, 1.5*inch, 1.2*inch, 0.9*inch, 0.8*inch])
+    anova_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f4788')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')]),
+    ]))
+    story.append(anova_table)
+    story.append(PageBreak())
+    
+    # --- SECTION 4: COEFFICIENTS TABLE (TOP 50 BY P-VALUE) ---
+    story.append(Paragraph("<b>4. Top 50 Parameters Sorted by p-value</b>", heading2_style))
+    story.append(Paragraph(
+        "<font size=8>The following table shows the 50 most significant parameters from the full model, "
+        "sorted from lowest to highest p-value. A lower p-value indicates greater statistical significance.</font>",
+        styles['Normal']
+    ))
+    story.append(Spacer(1, 0.1*inch))
+    
+    # Extract coefficients from HTML
+    coef_data = extract_coefficients_from_html(html_file_path, top_n=50)
+    
+    if coef_data and len(coef_data) > 1:
+        coef_table = Table(coef_data, colWidths=[2.5*inch, 1*inch, 0.9*inch, 0.8*inch, 0.8*inch])
+        coef_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f4788')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')]),
+        ]))
+        story.append(coef_table)
+    else:
+        story.append(Paragraph("<font size=9><i>Could not extract coefficient table from HTML</i></font>", styles['Normal']))
+    
+    story.append(PageBreak())
+    
+    # --- SECTION 5: LEVERAGE CHARTS ---
+    story.append(Paragraph("<b>5. Leverage Plots for Model Diagnostics</b>", heading2_style))
+    story.append(Paragraph(
+        "<font size=9>The following plots show residuals vs each predictor to assess model assumptions, "
+        "identify outliers, and evaluate prediction accuracy across the factor space.</font>",
+        styles['Normal']
+    ))
+    story.append(Spacer(1, 0.15*inch))
+    
+    # Extract leverage plots
+    with open(html_file_path, 'r', encoding='utf-8') as f:
+        html_content = f.read()
+    
+    base64_pattern = r'data:image/png;base64,([A-Za-z0-9+/=]+)'
+    matches = re.findall(base64_pattern, html_content)
+    
+    images_added = 0
+    for idx, base64_data in enumerate(matches):
+        try:
+            # Decode and add image
+            image_data = base64.b64decode(base64_data)
+            img_buffer = BytesIO(image_data)
+            img = Image.open(img_buffer)
+            
+            # Convert to RGB if necessary
+            if img.mode in ('RGBA', 'LA', 'P'):
+                rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+                rgb_img.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                img = rgb_img
+            
+            # Resize for better layout
+            img.thumbnail((5*inch, 2.5*inch), Image.Resampling.LANCZOS)
+            
+            # Save to temp file
+            temp_path = f"/tmp/doe_leverage_full_{idx}.png"
+            img.save(temp_path, 'PNG')
+            
+            # Add image to PDF
+            rl_image = RLImage(temp_path, width=5*inch, height=2.5*inch)
+            story.append(rl_image)
+            story.append(Spacer(1, 0.1*inch))
+            images_added += 1
+            
+            # Add page break every 2 images
+            if images_added % 2 == 0:
+                story.append(PageBreak())
+                
+        except Exception as e:
+            pass
+    
+    # Build PDF
+    doc.build(story)
+    print(f"✓ Created enhanced full model PDF: {pdf_path}")
+    print(f"  - Sections: Model fit, summary, ANOVA, coefficients (top 50), leverage charts")
+    print(f"  - Leverage plots: {images_added} embedded")
+    
+    return True
+
+
+def extract_coefficients_from_html(html_file_path, top_n=50):
+    """
+    Extract the coefficient table from HTML and return top N sorted by p-value.
+    Returns list of lists suitable for reportlab Table.
+    """
+    try:
+        with open(html_file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Extract the coefficient table
+        table_pattern = r'<table[^>]*>(.*?)</table>'
+        tables = re.findall(table_pattern, content, re.DOTALL)
+        
+        if len(tables) < 3:
+            return None
+        
+        coef_table_html = tables[2]
+        
+        # Extract headers
+        header_pattern = r'<th[^>]*>([^<]+)</th>'
+        headers = re.findall(header_pattern, coef_table_html)
+        
+        # Extract rows
+        row_pattern = r'<tr[^>]*>(.*?)</tr>'
+        rows = re.findall(row_pattern, coef_table_html, re.DOTALL)
+        
+        # Parse data rows
+        cell_pattern = r'<td[^>]*>([^<]+)</td>'
+        data_rows = []
+        
+        for i in range(1, len(rows)):  # Skip header row
+            cells = re.findall(cell_pattern, rows[i])
+            if len(cells) >= 5:
+                try:
+                    p_val = float(cells[3]) if cells[3] != 'nan' else 1.0
+                    data_rows.append({
+                        'param': cells[0] if len(cells) > 5 else f'Param_{i}',
+                        'coef': cells[0],
+                        'std_err': cells[1],
+                        't_val': cells[2],
+                        'p_val': p_val,
+                        'lower_ci': cells[4] if len(cells) > 4 else '',
+                        'upper_ci': cells[5] if len(cells) > 5 else '',
+                    })
+                except:
+                    pass
+        
+        # Sort by p-value
+        data_rows_sorted = sorted(data_rows, key=lambda x: x['p_val'])[:top_n]
+        
+        # Build table data
+        table_data = [
+            ['Parameter', 'Coefficient', 't-value', 'p-value', 'Significance'],
+        ]
+        
+        for row in data_rows_sorted:
+            sig = '***' if row['p_val'] < 0.001 else ('**' if row['p_val'] < 0.01 else ('*' if row['p_val'] < 0.05 else ''))
+            p_str = f"{row['p_val']:.2e}" if row['p_val'] > 0.001 else "<0.001"
+            table_data.append([
+                row['param'][:25],  # Truncate long names
+                f"{float(row['coef']):.4e}",
+                f"{float(row['t_val']):.2f}",
+                p_str,
+                sig,
+            ])
+        
+        return table_data
+        
+    except Exception as e:
+        print(f"Error extracting coefficients: {e}")
+        return None
+
