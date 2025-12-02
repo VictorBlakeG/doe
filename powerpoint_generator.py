@@ -13,6 +13,11 @@ from bs4 import BeautifulSoup
 import plotly.graph_objects as go
 from plotly.io import to_image
 
+try:
+    import pdfplumber
+    PDFPLUMBER_AVAILABLE = True
+except ImportError:
+    PDFPLUMBER_AVAILABLE = False
 
 try:
     from pptx import Presentation
@@ -24,7 +29,80 @@ except ImportError:
     PPTX_AVAILABLE = False
 
 
-def generate_model_fit_plot_image(html_path):
+def extract_model_fit_plot_from_pdf(html_path):
+    """
+    Extract the Actual by Predicted plot directly from the corresponding PDF file.
+    
+    Args:
+        html_path (str): Path to HTML file (used to determine PDF path)
+        
+    Returns:
+        BytesIO: Image BytesIO object or None if extraction fails
+    """
+    if not PDFPLUMBER_AVAILABLE:
+        print("  ! pdfplumber not available")
+        return None
+    
+    try:
+        # Determine PDF path from HTML path
+        # HTML: outputs/doe_analysis_report.html -> PDF: outputs/doe_analysis_report_summary.pdf
+        # HTML: outputs/doe_analysis_reduced.html -> PDF: outputs/doe_analysis_reduced_summary.pdf
+        html_name = Path(html_path).stem  # e.g., 'doe_analysis_report'
+        pdf_name = f"{html_name}_summary.pdf"
+        pdf_dir = Path(html_path).parent
+        pdf_path = pdf_dir / pdf_name
+        
+        print(f"  Looking for PDF: {pdf_path}")
+        
+        if not pdf_path.exists():
+            print(f"  ! PDF not found: {pdf_path}")
+            return None
+        
+        # Open PDF and extract first image (model fit diagram)
+        with pdfplumber.open(str(pdf_path)) as pdf:
+            if len(pdf.pages) < 1:
+                print("  ! PDF has no pages")
+                return None
+            
+            # Get first page which contains the model fit diagram
+            page = pdf.pages[0]
+            
+            if not page.images:
+                print("  ! No images found on first page of PDF")
+                return None
+            
+            # Get the first image (model fit diagram)
+            img_info = page.images[0]
+            
+            # Use convert_to_images to get PIL image and save as PNG
+            # This properly handles PDF image decompression
+            from PIL import Image
+            
+            # Extract raw image data using pdfplumber's method
+            try:
+                # Get cropped image from page
+                cropping = (img_info['x0'], img_info['top'], img_info['x1'], img_info['bottom'])
+                pil_image = page.crop(cropping).to_image()
+                
+                # Save to BytesIO
+                image_io = BytesIO()
+                pil_image.save(image_io, format='PNG')
+                image_io.seek(0)
+                
+                print(f"  ✓ Successfully extracted model fit plot from PDF")
+                return image_io
+            except:
+                # Fallback: try to extract using the stream directly
+                print("  ! Could not extract using crop method, trying stream extraction")
+                return None
+            
+    except Exception as e:
+        print(f"  ! Error extracting from PDF: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
     """
     Generate the Actual by Predicted plot from HTML data and render as image.
     Recreates the same plot as shown in the PDF reports.
@@ -85,8 +163,7 @@ def generate_model_fit_plot_image(html_path):
 
 def extract_model_diagram_image(html_path):
     """
-    Extract and render the Actual by Predicted plot from HTML using Plotly.
-    DEPRECATED: Use generate_model_fit_plot_image instead.
+    Extract the Actual by Predicted plot from PDF file.
     
     Args:
         html_path (str): Path to HTML file
@@ -94,7 +171,7 @@ def extract_model_diagram_image(html_path):
     Returns:
         BytesIO: Image BytesIO object or None if extraction fails
     """
-    return generate_model_fit_plot_image(html_path)
+    return extract_model_fit_plot_from_pdf(html_path)
 
 
 
@@ -463,9 +540,9 @@ def create_full_model_powerpoint(html_path, output_path, title="DOE Full Model A
         # Title slide
         create_title_slide(prs, title, "Design of Experiments Analysis")
         
-        # Extract model diagram image first
-        print("  Extracting model fit plot from HTML data...")
-        model_diagram = generate_model_fit_plot_image(html_path)
+        # Extract model diagram image from PDF
+        print("  Extracting model fit plot from PDF...")
+        model_diagram = extract_model_fit_plot_from_pdf(html_path)
         
         # Extract other content from HTML (skip first image which is model diagram)
         images = extract_base64_images_from_html(html_path, max_images=150, skip_first=True)
@@ -606,9 +683,9 @@ def create_reduced_model_powerpoint(html_path, output_path, title="DOE Reduced M
         # Title slide
         create_title_slide(prs, title, "Design of Experiments - Reduced Model")
         
-        # Extract model diagram image first
-        print("  Extracting model fit plot from HTML data...")
-        model_diagram = generate_model_fit_plot_image(html_path)
+        # Extract model diagram image from PDF
+        print("  Extracting model fit plot from PDF...")
+        model_diagram = extract_model_fit_plot_from_pdf(html_path)
         
         # Extract other content from HTML (skip first image which is model diagram)
         images = extract_base64_images_from_html(html_path, max_images=150, skip_first=True)
