@@ -13,6 +13,12 @@ from scipy import stats
 import warnings
 warnings.filterwarnings('ignore')
 
+try:
+    import pdfkit
+    PDFKIT_AVAILABLE = True
+except ImportError:
+    PDFKIT_AVAILABLE = False
+
 
 def setup_doe_design(balanced_low_df, balanced_high_df):
     """
@@ -1060,4 +1066,163 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
         f.write(summary_html)
     
     print(f"Reduced analysis report saved to: {html_file}\n")
+
+
+def convert_html_to_pdf(output_dir='outputs'):
+    """
+    Convert all HTML analysis reports to PDF format using reportlab.
+    
+    Converts:
+    - doe_design.html → doe_design.pdf
+    - doe_analysis_report.html → doe_analysis_report.pdf
+    - doe_analysis_reduced.html → doe_analysis_reduced.pdf
+    
+    Args:
+        output_dir (str): Directory containing HTML files to convert
+        
+    Returns:
+        dict: Conversion status for each file
+    """
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    import re
+    
+    output_path = Path(output_dir)
+    
+    print("\n" + "="*80)
+    print("CONVERTING HTML REPORTS TO PDF")
+    print("="*80 + "\n")
+    
+    html_files = [
+        'doe_design.html',
+        'doe_analysis_report.html',
+        'doe_analysis_reduced.html'
+    ]
+    
+    conversion_status = {}
+    
+    for html_file in html_files:
+        html_path = output_path / html_file
+        pdf_path = output_path / html_file.replace('.html', '.pdf')
+        
+        if not html_path.exists():
+            print(f"⚠ {html_file}: File not found")
+            conversion_status[html_file] = 'not_found'
+            continue
+        
+        try:
+            # Read HTML file
+            with open(html_path, 'r', encoding='utf-8', errors='ignore') as f:
+                html_content = f.read()
+            
+            # Extract text content from HTML (basic extraction)
+            # Remove script and style tags
+            html_content = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.DOTALL)
+            html_content = re.sub(r'<style[^>]*>.*?</style>', '', html_content, flags=re.DOTALL)
+            
+            # Remove HTML tags
+            text_content = re.sub('<[^<]+?>', '', html_content)
+            
+            # Decode HTML entities
+            text_content = text_content.replace('&nbsp;', ' ')
+            text_content = text_content.replace('&lt;', '<')
+            text_content = text_content.replace('&gt;', '>')
+            text_content = text_content.replace('&amp;', '&')
+            text_content = text_content.replace('&quot;', '"')
+            text_content = text_content.replace('&#39;', "'")
+            
+            # Clean up excessive whitespace
+            text_content = re.sub(r'\s+', ' ', text_content)
+            text_content = re.sub(r' \n ', '\n', text_content)
+            
+            # Create PDF
+            c = canvas.Canvas(str(pdf_path), pagesize=letter)
+            width, height = letter
+            
+            # Add title
+            title = html_file.replace('.html', '').replace('_', ' ').title()
+            c.setFont("Helvetica-Bold", 14)
+            c.drawString(50, height - 50, f"DOE Analysis: {title}")
+            
+            # Add timestamp
+            from datetime import datetime
+            c.setFont("Helvetica", 9)
+            c.drawString(50, height - 70, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            # Add content
+            c.setFont("Helvetica", 9)
+            y = height - 100
+            line_height = 11
+            margin = 50
+            max_width = width - 2 * margin
+            
+            # Split into lines and draw
+            lines = text_content.split('\n')
+            page_count = 1
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    y -= line_height * 0.5
+                    continue
+                
+                # Check if we need a new page
+                if y < margin + line_height:
+                    c.showPage()
+                    c.setFont("Helvetica", 9)
+                    page_count += 1
+                    
+                    # Add page number
+                    c.drawString(width - 100, 30, f"Page {page_count}")
+                    
+                    y = height - margin
+                
+                # Wrap long lines
+                if len(line) > 100:
+                    # Split into chunks
+                    words = line.split()
+                    chunk = ""
+                    for word in words:
+                        if len(chunk) + len(word) + 1 <= 100:
+                            chunk += word + " "
+                        else:
+                            if chunk.strip():
+                                c.drawString(margin, y, chunk.strip())
+                                y -= line_height
+                            chunk = word + " "
+                    if chunk.strip():
+                        c.drawString(margin, y, chunk.strip())
+                        y -= line_height
+                else:
+                    c.drawString(margin, y, line[:100])
+                    y -= line_height
+            
+            # Add page number to last page
+            if y != height - margin:
+                c.drawString(width - 100, 30, f"Page {page_count}")
+            
+            c.save()
+            
+            pdf_size = pdf_path.stat().st_size / (1024 * 1024)
+            print(f"✓ {html_file} → {pdf_path.name} ({pdf_size:.3f} MB)")
+            conversion_status[html_file] = 'success'
+            
+        except Exception as e:
+            print(f"✗ {html_file}: {str(e)[:60]}")
+            conversion_status[html_file] = 'failed'
+    
+    print("\n" + "="*80)
+    print("PDF CONVERSION SUMMARY")
+    print("="*80)
+    
+    successful = sum(1 for v in conversion_status.values() if v == 'success')
+    failed = sum(1 for v in conversion_status.values() if v == 'failed')
+    not_found = sum(1 for v in conversion_status.values() if v == 'not_found')
+    
+    print(f"Successful conversions: {successful}")
+    print(f"Failed conversions: {failed}")
+    print(f"Files not found: {not_found}")
+    print("="*80 + "\n")
+    
+    return conversion_status
 

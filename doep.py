@@ -8,7 +8,7 @@ from clean import clean_tman
 from export import export_fan_dfs_to_csv
 from balance import balance_dataframes
 from viz import create_fan_hl_histogram, create_ttemp_hl_histogram
-from doe import setup_doe_design, create_full_factorial_design, fit_doe_model, fit_reduced_doe_model
+from doe import setup_doe_design, create_full_factorial_design, fit_doe_model, fit_reduced_doe_model, convert_html_to_pdf
 
 
 def main():
@@ -101,6 +101,11 @@ def main():
     print("Step 15: Fitting Reduced Design of Experiments model...")
     reduced_model, reduced_results, reduced_summary_stats = fit_reduced_doe_model(doe_df, results)
     print("✓ Reduced DOE model fit completed\n")
+    
+    # Step 16: Convert HTML reports to PDF
+    print("Step 16: Converting HTML reports to PDF...")
+    pdf_status = convert_html_to_pdf()
+    print("✓ HTML to PDF conversion completed\n")
     
     print("Data processing pipeline completed!")
 
