@@ -8,7 +8,7 @@ from clean import clean_tman
 from export import export_fan_dfs_to_csv
 from balance import balance_dataframes
 from viz import create_fan_hl_histogram, create_ttemp_hl_histogram
-from doe import setup_doe_design, create_full_factorial_design, fit_doe_model
+from doe import setup_doe_design, create_full_factorial_design, fit_doe_model, fit_reduced_doe_model
 
 
 def main():
@@ -96,6 +96,11 @@ def main():
     print("Step 14: Fitting Design of Experiments model...")
     model, results, summary_stats = fit_doe_model(doe_df)
     print("✓ DOE model fit completed\n")
+    
+    # Step 15: Fit reduced DOE model (removing non-significant terms)
+    print("Step 15: Fitting Reduced Design of Experiments model...")
+    reduced_model, reduced_results, reduced_summary_stats = fit_reduced_doe_model(doe_df, results)
+    print("✓ Reduced DOE model fit completed\n")
     
     print("Data processing pipeline completed!")
 
