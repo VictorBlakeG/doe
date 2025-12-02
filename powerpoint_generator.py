@@ -24,26 +24,32 @@ except ImportError:
     PPTX_AVAILABLE = False
 
 
-def extract_model_diagram_image(html_path):
+def generate_model_fit_plot_image(html_path):
     """
-    Extract and render the Actual by Predicted plot from HTML using Plotly.
+    Generate the Actual by Predicted plot from HTML data and render as image.
+    Recreates the same plot as shown in the PDF reports.
     
     Args:
         html_path (str): Path to HTML file
         
     Returns:
-        BytesIO: Image BytesIO object or None if extraction fails
+        BytesIO: Image BytesIO object or None if generation fails
     """
     try:
+        # Extract tables from HTML to get model results
+        tables = extract_html_tables(html_path)
+        
+        if not tables or len(tables) < 2:
+            print("  ! Could not find sufficient data in HTML")
+            return None
+        
+        # Get actual and predicted values from the HTML
+        # We'll look for patterns in the HTML that indicate actual vs predicted
         with open(html_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
         
-        # Extract Plotly figure data from HTML
-        # Look for the figure definition in the HTML script
-        import re
-        import json
-        
-        # Find the plotly figure definition
+        # Try to extract from the first Plotly figure in the HTML
+        # Look for the trace data with actual and predicted points
         pattern = r'Plotly\.newPlot\([^,]*,\s*(\[.*?\]),\s*(\{.*?\}),\s*(\{.*?\})\s*\)'
         match = re.search(pattern, html_content, re.DOTALL)
         
@@ -52,30 +58,44 @@ def extract_model_diagram_image(html_path):
             return None
         
         try:
-            # Extract the data, layout, and config from the match
+            # Extract the data and layout from the match
             data_str = match.group(1)
             layout_str = match.group(2)
-            config_str = match.group(3)
             
-            # Parse JSON strings
+            # Parse JSON strings carefully
             data = json.loads(data_str)
             layout = json.loads(layout_str)
             
-            # Create Plotly figure
+            # Create Plotly figure with the extracted data
             fig = go.Figure(data=data, layout=layout)
             
-            # Render to image
-            image_bytes = to_image(fig, format='png', width=800, height=600)
+            # Render to image with good resolution
+            image_bytes = to_image(fig, format='png', width=900, height=700)
             image_io = BytesIO(image_bytes)
             return image_io
             
         except Exception as e:
-            print(f"  ! Error parsing Plotly figure: {e}")
+            print(f"  ! Error parsing Plotly figure data: {e}")
             return None
             
     except Exception as e:
-        print(f"  ! Error extracting model diagram: {e}")
+        print(f"  ! Error generating model fit plot: {e}")
         return None
+
+
+def extract_model_diagram_image(html_path):
+    """
+    Extract and render the Actual by Predicted plot from HTML using Plotly.
+    DEPRECATED: Use generate_model_fit_plot_image instead.
+    
+    Args:
+        html_path (str): Path to HTML file
+        
+    Returns:
+        BytesIO: Image BytesIO object or None if extraction fails
+    """
+    return generate_model_fit_plot_image(html_path)
+
 
 
 def extract_base64_images_from_html(html_path, max_images=10, skip_first=True):
@@ -444,8 +464,8 @@ def create_full_model_powerpoint(html_path, output_path, title="DOE Full Model A
         create_title_slide(prs, title, "Design of Experiments Analysis")
         
         # Extract model diagram image first
-        print("  Extracting model diagram image...")
-        model_diagram = extract_model_diagram_image(html_path)
+        print("  Extracting model fit plot from HTML data...")
+        model_diagram = generate_model_fit_plot_image(html_path)
         
         # Extract other content from HTML (skip first image which is model diagram)
         images = extract_base64_images_from_html(html_path, max_images=150, skip_first=True)
@@ -587,8 +607,8 @@ def create_reduced_model_powerpoint(html_path, output_path, title="DOE Reduced M
         create_title_slide(prs, title, "Design of Experiments - Reduced Model")
         
         # Extract model diagram image first
-        print("  Extracting model diagram image...")
-        model_diagram = extract_model_diagram_image(html_path)
+        print("  Extracting model fit plot from HTML data...")
+        model_diagram = generate_model_fit_plot_image(html_path)
         
         # Extract other content from HTML (skip first image which is model diagram)
         images = extract_base64_images_from_html(html_path, max_images=150, skip_first=True)
