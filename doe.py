@@ -351,6 +351,106 @@ def _calculate_lack_of_fit(model_df, results, anova_table):
     return lof_table
 
 
+def _debug_model_comparison(full_results, reduced_results, output_dir='outputs'):
+    """
+    Debug function to print detailed comparison of full vs reduced model statistics.
+    Helps identify why model fit diagrams might look identical.
+    """
+    print("\n" + "="*100)
+    print("DEBUG: DETAILED MODEL COMPARISON")
+    print("="*100)
+    
+    # 1. R-squared comparison
+    print("\n1. R-SQUARED COMPARISON:")
+    print(f"   Full Model R²:    {full_results.rsquared:.10f}")
+    print(f"   Reduced Model R²: {reduced_results.rsquared:.10f}")
+    print(f"   Difference:       {reduced_results.rsquared - full_results.rsquared:+.10f}")
+    print(f"   % Change:         {((reduced_results.rsquared - full_results.rsquared) / full_results.rsquared * 100):+.4f}%")
+    
+    # 2. MSE and Residual Std Error
+    print("\n2. ERROR METRICS:")
+    full_mse = full_results.mse_resid
+    reduced_mse = reduced_results.mse_resid
+    full_std = np.sqrt(full_mse)
+    reduced_std = np.sqrt(reduced_mse)
+    
+    print(f"   Full Model MSE:       {full_mse:.12f}")
+    print(f"   Reduced Model MSE:    {reduced_mse:.12f}")
+    print(f"   MSE Difference:       {reduced_mse - full_mse:+.12f}")
+    print(f"   MSE % Change:         {((reduced_mse - full_mse) / full_mse * 100):+.6f}%")
+    print()
+    print(f"   Full Model Std Error:    {full_std:.10f}")
+    print(f"   Reduced Model Std Error: {reduced_std:.10f}")
+    print(f"   Std Error Difference:    {reduced_std - full_std:+.10f}")
+    print(f"   Std Error % Change:      {((reduced_std - full_std) / full_std * 100):+.6f}%")
+    
+    # 3. Confidence Interval comparison
+    print("\n3. 95% CONFIDENCE INTERVAL WIDTHS:")
+    full_ci_width = 1.96 * full_std
+    reduced_ci_width = 1.96 * reduced_std
+    
+    print(f"   Full Model CI Half-Width (±):    {full_ci_width:.10f}")
+    print(f"   Reduced Model CI Half-Width (±): {reduced_ci_width:.10f}")
+    print(f"   CI Width Difference:             {reduced_ci_width - full_ci_width:+.10f}")
+    print(f"   CI Width % Change:               {((reduced_ci_width - full_ci_width) / full_ci_width * 100):+.6f}%")
+    
+    # 4. Degrees of Freedom
+    print("\n4. DEGREES OF FREEDOM:")
+    print(f"   Full Model df_resid:    {full_results.df_resid:.1f}")
+    print(f"   Reduced Model df_resid: {reduced_results.df_resid:.1f}")
+    print(f"   Difference:             {reduced_results.df_resid - full_results.df_resid:+.1f}")
+    
+    # 5. Parameters
+    print("\n5. MODEL PARAMETERS:")
+    print(f"   Full Model parameters:    {len(full_results.params)}")
+    print(f"   Reduced Model parameters: {len(reduced_results.params)}")
+    print(f"   Parameters removed:       {len(full_results.params) - len(reduced_results.params)}")
+    
+    # 6. F-statistics
+    print("\n6. F-STATISTICS:")
+    print(f"   Full Model F-stat:    {full_results.fvalue:.10f}")
+    print(f"   Reduced Model F-stat: {reduced_results.fvalue:.10f}")
+    print(f"   F-stat Difference:    {reduced_results.fvalue - full_results.fvalue:+.10f}")
+    
+    # 7. Prediction range
+    print("\n7. PREDICTION RANGE:")
+    full_pred = full_results.fittedvalues
+    reduced_pred = reduced_results.fittedvalues
+    full_actual = full_results.model.endog
+    reduced_actual = reduced_results.model.endog
+    
+    print(f"   Full Model Predicted Min/Max:    {full_pred.min():.6f} / {full_pred.max():.6f}")
+    print(f"   Reduced Model Predicted Min/Max: {reduced_pred.min():.6f} / {reduced_pred.max():.6f}")
+    print(f"   Full Model Actual Min/Max:       {full_actual.min():.6f} / {full_actual.max():.6f}")
+    print(f"   Reduced Model Actual Min/Max:    {reduced_actual.min():.6f} / {reduced_actual.max():.6f}")
+    
+    # 8. Residuals comparison
+    print("\n8. RESIDUALS ANALYSIS:")
+    full_resid = full_results.resid
+    reduced_resid = reduced_results.resid
+    
+    print(f"   Full Model Residuals Mean:    {full_resid.mean():.12f}")
+    print(f"   Reduced Model Residuals Mean: {reduced_resid.mean():.12f}")
+    print()
+    print(f"   Full Model Residuals Std:     {full_resid.std():.10f}")
+    print(f"   Reduced Model Residuals Std:  {reduced_resid.std():.10f}")
+    print()
+    print(f"   Full Model Residuals Min/Max:    {full_resid.min():.6f} / {full_resid.max():.6f}")
+    print(f"   Reduced Model Residuals Min/Max: {reduced_resid.min():.6f} / {reduced_resid.max():.6f}")
+    
+    # 9. Sample size verification
+    print("\n9. SAMPLE SIZE:")
+    print(f"   Full Model observations:    {len(full_actual)}")
+    print(f"   Reduced Model observations: {len(reduced_actual)}")
+    full_actual_arr = full_actual.values if hasattr(full_actual, 'values') else full_actual
+    reduced_actual_arr = reduced_actual.values if hasattr(reduced_actual, 'values') else reduced_actual
+    print(f"   Same data?                  {np.allclose(full_actual_arr, reduced_actual_arr)}")
+    
+    print("\n" + "="*100)
+    print("END DEBUG")
+    print("="*100 + "\n")
+
+
 def fit_reduced_doe_model(doe_df, full_results, alpha=0.05, output_dir='outputs'):
     """
     Fit a reduced DOE model by removing non-significant terms (p-value > alpha).
@@ -476,6 +576,9 @@ def fit_reduced_doe_model(doe_df, full_results, alpha=0.05, output_dir='outputs'
     
     # Create HTML report
     create_reduced_doe_report(results, full_results, anova_table, lof_table, summary_stats, output_path)
+    
+    # DEBUG: Print detailed comparison
+    _debug_model_comparison(full_results, results, output_path)
     
     return model, results, summary_stats
 
