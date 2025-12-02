@@ -192,6 +192,95 @@ def create_title_slide(prs, title, subtitle=""):
     return slide
 
 
+def create_equation_slide(prs, model_type="Full"):
+    """
+    Create a visually prominent model equation slide.
+    
+    Args:
+        prs (Presentation): PowerPoint presentation object
+        model_type (str): "Full" or "Reduced" model
+        
+    Returns:
+        Slide: The created slide
+    """
+    slide_layout = prs.slide_layouts[6]  # Blank layout
+    slide = prs.slides.add_slide(slide_layout)
+    
+    # Add title
+    title_box = slide.shapes.add_textbox(
+        Inches(0.5), Inches(0.4), Inches(9), Inches(0.6)
+    )
+    title_frame = title_box.text_frame
+    title_p = title_frame.paragraphs[0]
+    title_p.text = "Model Equation"
+    title_p.font.size = Pt(40)
+    title_p.font.bold = True
+    title_p.font.color.rgb = RGBColor(31, 78, 121)
+    
+    # Add horizontal line
+    line = slide.shapes.add_connector(1, Inches(0.5), Inches(1.1), Inches(9.5), Inches(1.1))
+    line.line.color.rgb = RGBColor(31, 78, 121)
+    line.line.width = Pt(2)
+    
+    # Main equation box with larger font
+    eq_box = slide.shapes.add_textbox(
+        Inches(0.7), Inches(1.5), Inches(8.6), Inches(1.5)
+    )
+    eq_frame = eq_box.text_frame
+    eq_frame.word_wrap = True
+    eq_p = eq_frame.paragraphs[0]
+    eq_p.text = "Interface_Temp = β₀ + Σ(β_i × Factor_i) + ε"
+    eq_p.font.size = Pt(32)
+    eq_p.font.bold = True
+    eq_p.font.color.rgb = RGBColor(192, 0, 0)
+    eq_p.alignment = PP_ALIGN.CENTER
+    
+    # Variable definitions
+    def_box = slide.shapes.add_textbox(
+        Inches(0.7), Inches(3.2), Inches(8.6), Inches(2.5)
+    )
+    def_frame = def_box.text_frame
+    def_frame.word_wrap = True
+    
+    definitions = [
+        "Where:",
+        "• β₀ = Intercept",
+        "• β_i = Parameter coefficients",
+        "• Factor_i = Design factors (Transceiver, Fan Speed, Rack Unit)",
+        "• ε = Random error term"
+    ]
+    
+    for idx, definition in enumerate(definitions):
+        if idx == 0:
+            p = def_frame.paragraphs[0]
+        else:
+            p = def_frame.add_paragraph()
+        p.text = definition
+        p.font.size = Pt(18)
+        p.font.color.rgb = RGBColor(50, 50, 50)
+        p.level = 0
+    
+    # Model info box
+    info_box = slide.shapes.add_textbox(
+        Inches(0.7), Inches(5.9), Inches(8.6), Inches(1.2)
+    )
+    info_frame = info_box.text_frame
+    info_frame.word_wrap = True
+    
+    if model_type == "Full":
+        info_text = "Full Model: 820 parameters | Model Type: Multiple Linear Regression | Response: Interface_Temp"
+    else:
+        info_text = "Reduced Model: 451 parameters (-45%) | Model Type: Multiple Linear Regression | Response: Interface_Temp"
+    
+    info_p = info_frame.paragraphs[0]
+    info_p.text = info_text
+    info_p.font.size = Pt(14)
+    info_p.font.color.rgb = RGBColor(100, 100, 100)
+    info_p.alignment = PP_ALIGN.CENTER
+    
+    return slide
+
+
 def create_content_slide(prs, title, content_type="text", content=None):
     """
     Create a content slide with title and content.
@@ -371,22 +460,8 @@ def create_full_model_powerpoint(html_path, output_path, title="DOE Full Model A
         else:
             print("  ✗ Could not extract model fit diagram")
         
-        # SLIDE 2: Model Equation (text slide)
-        model_eq_text = """Model Equation:
-
-Interface_Temp = β₀ + Σ(β_i × Factor_i) + ε
-
-Where:
-• β₀ = Intercept
-• β_i = Parameter coefficients
-• Factor_i = Design factors (Transceiver, Fan Speed, Rack Unit)
-• ε = Random error term
-
-Full Model: 820 parameters
-Model Type: Multiple Linear Regression
-Response Variable: Interface_Temp
-        """
-        create_content_slide(prs, "Model Equation", "text", model_eq_text)
+        # SLIDE 2: Model Equation (visually formatted slide)
+        create_equation_slide(prs, model_type="Full")
         print("  ✓ Added Model Equation slide")
         
         # SLIDE 3: Model Comparison Table (Full vs Reduced)
@@ -528,22 +603,8 @@ def create_reduced_model_powerpoint(html_path, output_path, title="DOE Reduced M
         else:
             print("  ✗ Could not extract model fit diagram")
         
-        # SLIDE 2: Model Equation (text slide)
-        model_eq_text = """Model Equation (Reduced):
-
-Interface_Temp = β₀ + Σ(β_i × Factor_i) + ε
-
-Where:
-• β₀ = Intercept
-• β_i = Parameter coefficients (non-significant terms removed)
-• Factor_i = Design factors (Transceiver, Fan Speed, Rack Unit)
-• ε = Random error term
-
-Reduced Model: 451 parameters (-45% from full model)
-Model Type: Multiple Linear Regression
-Response Variable: Interface_Temp
-        """
-        create_content_slide(prs, "Model Equation", "text", model_eq_text)
+        # SLIDE 2: Model Equation (visually formatted slide)
+        create_equation_slide(prs, model_type="Reduced")
         print("  ✓ Added Model Equation slide")
         
         # SLIDE 3: Model Comparison Table (Full vs Reduced)
