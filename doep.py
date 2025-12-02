@@ -9,6 +9,7 @@ from export import export_fan_dfs_to_csv
 from balance import balance_dataframes
 from viz import create_fan_hl_histogram, create_ttemp_hl_histogram
 from doe import setup_doe_design, create_full_factorial_design, fit_doe_model, fit_reduced_doe_model, convert_html_to_pdf
+from powerpoint_generator import convert_html_to_powerpoint
 
 
 def main():
@@ -106,6 +107,11 @@ def main():
     print("Step 16: Converting HTML reports to PDF...")
     pdf_status = convert_html_to_pdf()
     print("✓ HTML to PDF conversion completed\n")
+    
+    # Step 17: Convert HTML reports to PowerPoint
+    print("Step 17: Converting HTML reports to PowerPoint...")
+    pptx_status = convert_html_to_powerpoint()
+    print("✓ HTML to PowerPoint conversion completed\n")
     
     print("Data processing pipeline completed!")
 
