@@ -1068,99 +1068,77 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
     print(f"Reduced analysis report saved to: {html_file}\n")
 
 
+
 def convert_html_to_pdf(output_dir='outputs'):
     """
-    Convert all HTML analysis reports to PDF format.
+    Convert all HTML analysis reports to comprehensive PDF summaries.
     
-    Creates reference PDFs with key summaries since HTML files contain interactive
-    visualizations that cannot be fully rendered to PDF format on this system.
+    Uses the pdf_generator module to create properly formatted multi-page PDFs
+    with complete statistics, ANOVA tables, and model comparisons.
     
     Generates:
     - doe_design_summary.pdf - Design overview and factor levels
-    - doe_analysis_report_summary.pdf - Full model key statistics
+    - doe_analysis_report_summary.pdf - Full model key statistics and ANOVA  
     - doe_analysis_reduced_summary.pdf - Reduced model summary and comparison
     
     Args:
-        output_dir (str): Directory containing HTML files to convert
+        output_dir (str): Directory for output files
         
     Returns:
         dict: Conversion status for each file
     """
-    from reportlab.lib.pagesizes import letter, A4
-    from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from datetime import datetime
-    import re
+    from pdf_generator import create_design_summary_pdf, create_analysis_summary_pdf, create_reduced_summary_pdf
     
     output_path = Path(output_dir)
     
     print("\n" + "="*80)
-    print("CREATING PDF SUMMARIES FROM HTML REPORTS")
+    print("CREATING PDF SUMMARIES FROM ANALYSIS RESULTS")
     print("="*80 + "\n")
     
-    # Note: HTML files are kept as primary deliverables
     print("📋 HTML reports are the complete deliverables with full interactive content")
-    print("📄 PDF files created as reference summaries (text extraction from HTML)\n")
+    print("📄 PDF files created as comprehensive reference summaries\n")
+    
+    conversion_status = {}
     
     try:
-        # Extract key metrics from HTML files
-        metrics = {}
-        
-        # Parse doe_analysis_report.html for model metrics
-        report_path = output_path / 'doe_analysis_report.html'
-        if report_path.exists():
-            metrics['full_model'] = _extract_model_metrics(report_path)
-        
-        # Parse doe_analysis_reduced.html for reduced model metrics
-        reduced_path = output_path / 'doe_analysis_reduced.html'
-        if reduced_path.exists():
-            metrics['reduced_model'] = _extract_model_metrics(reduced_path)
-        
-        # Parse doe_design.html for design info
-        design_path = output_path / 'doe_design.html'
-        if design_path.exists():
-            metrics['design'] = _extract_design_metrics(design_path)
-        
-        # Create PDF summaries
-        conversion_status = {}
-        
         # 1. Create DOE Design Summary PDF
-        if design_path.exists():
-            try:
+        try:
+            design_path = output_path / 'doe_design.html'
+            if design_path.exists():
                 pdf_path = output_path / 'doe_design_summary.pdf'
-                _create_design_summary_pdf(str(pdf_path), metrics.get('design', {}))
+                create_design_summary_pdf(str(pdf_path))
                 pdf_size = pdf_path.stat().st_size / (1024 * 1024)
                 print(f"✓ doe_design_summary.pdf ({pdf_size:.3f} MB)")
                 conversion_status['doe_design.html'] = 'success'
-            except Exception as e:
-                print(f"✗ doe_design_summary.pdf: {str(e)[:60]}")
-                conversion_status['doe_design.html'] = 'failed'
+        except Exception as e:
+            print(f"✗ doe_design_summary.pdf: {str(e)[:60]}")
+            conversion_status['doe_design.html'] = 'failed'
         
         # 2. Create Analysis Report Summary PDF
-        if report_path.exists():
-            try:
+        try:
+            report_path = output_path / 'doe_analysis_report.html'
+            if report_path.exists():
                 pdf_path = output_path / 'doe_analysis_report_summary.pdf'
-                _create_analysis_summary_pdf(str(pdf_path), metrics.get('full_model', {}), model_type='Full')
+                create_analysis_summary_pdf(str(pdf_path), model_type='Full')
                 pdf_size = pdf_path.stat().st_size / (1024 * 1024)
                 print(f"✓ doe_analysis_report_summary.pdf ({pdf_size:.3f} MB)")
                 conversion_status['doe_analysis_report.html'] = 'success'
-            except Exception as e:
-                print(f"✗ doe_analysis_report_summary.pdf: {str(e)[:60]}")
-                conversion_status['doe_analysis_report.html'] = 'failed'
+        except Exception as e:
+            print(f"✗ doe_analysis_report_summary.pdf: {str(e)[:60]}")
+            conversion_status['doe_analysis_report.html'] = 'failed'
         
         # 3. Create Reduced Model Summary PDF
-        if reduced_path.exists():
-            try:
+        try:
+            reduced_path = output_path / 'doe_analysis_reduced.html'
+            if reduced_path.exists():
                 pdf_path = output_path / 'doe_analysis_reduced_summary.pdf'
-                _create_reduced_summary_pdf(str(pdf_path), metrics.get('reduced_model', {}), metrics.get('full_model', {}))
+                create_reduced_summary_pdf(str(pdf_path))
                 pdf_size = pdf_path.stat().st_size / (1024 * 1024)
                 print(f"✓ doe_analysis_reduced_summary.pdf ({pdf_size:.3f} MB)")
                 conversion_status['doe_analysis_reduced.html'] = 'success'
-            except Exception as e:
-                print(f"✗ doe_analysis_reduced_summary.pdf: {str(e)[:60]}")
-                conversion_status['doe_analysis_reduced.html'] = 'failed'
+        except Exception as e:
+            print(f"✗ doe_analysis_reduced_summary.pdf: {str(e)[:60]}")
+            conversion_status['doe_analysis_reduced.html'] = 'failed'
         
     except Exception as e:
         print(f"Error during PDF creation: {str(e)}")
@@ -1169,284 +1147,8 @@ def convert_html_to_pdf(output_dir='outputs'):
     print("\n" + "="*80)
     print("PDF SUMMARY GENERATION COMPLETE")
     print("="*80)
-    print("📌 Note: HTML files contain complete analysis with interactive plots")
-    print("📌 PDF summaries provide quick reference of key metrics and statistics")
+    print("�� Note: HTML files contain complete analysis with interactive plots")
+    print("📌 PDF summaries provide comprehensive reference of all metrics and statistics")
     print("="*80 + "\n")
     
     return conversion_status
-
-
-def _extract_model_metrics(html_file):
-    """Extract key model metrics from HTML report."""
-    try:
-        with open(html_file, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
-        
-        metrics = {}
-        
-        # Try to extract common statistics
-        import re
-        
-        # Extract R-squared values
-        r2_match = re.search(r"R-squared[:\s</>]*?([0-9.]+)", content, re.IGNORECASE)
-        if r2_match:
-            metrics['R-squared'] = r2_match.group(1)
-        
-        # Extract adjusted R-squared
-        adj_r2_match = re.search(r"Adjusted R-squared[:\s</>]*?([0-9.]+)", content, re.IGNORECASE)
-        if adj_r2_match:
-            metrics['Adj R-squared'] = adj_r2_match.group(1)
-        
-        # Extract F-statistic
-        f_match = re.search(r"F-statistic[:\s</>]*?([0-9.]+)", content, re.IGNORECASE)
-        if f_match:
-            metrics['F-statistic'] = f_match.group(1)
-        
-        # Extract parameters/terms
-        params_match = re.search(r"(\d+)\s*parameters", content, re.IGNORECASE)
-        if params_match:
-            metrics['Parameters'] = params_match.group(1)
-        
-        return metrics
-    except Exception as e:
-        print(f"Warning: Could not extract metrics from {html_file}: {str(e)[:50]}")
-        return {}
-
-
-def _extract_design_metrics(html_file):
-    """Extract DOE design information from HTML."""
-    try:
-        with open(html_file, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
-        
-        metrics = {}
-        import re
-        
-        # Look for design information
-        if "factorial" in content.lower():
-            metrics['Type'] = 'Full Factorial'
-        
-        # Try to extract run count
-        runs_match = re.search(r"(\d+)\s*runs?", content, re.IGNORECASE)
-        if runs_match:
-            metrics['Runs'] = runs_match.group(1)
-        
-        # Extract factor info
-        if "Transceiver_Manufacturer" in content:
-            metrics['Factors'] = 'Transceiver, Rack Unit, Fan Speed'
-        
-        return metrics
-    except Exception as e:
-        print(f"Warning: Could not extract design metrics: {str(e)[:50]}")
-        return {}
-
-
-def _create_design_summary_pdf(pdf_path, metrics):
-    """Create a design summary PDF."""
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib import colors
-    from datetime import datetime
-    
-    doc = SimpleDocTemplate(pdf_path, pagesize=letter)
-    story = []
-    styles = getSampleStyleSheet()
-    
-    # Title
-    title = Paragraph("<b>DOE Design Summary</b>", styles['Heading1'])
-    story.append(title)
-    story.append(Spacer(1, 0.2*inch))
-    
-    # Date
-    date_text = Paragraph(f"<font size=9>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</font>", styles['Normal'])
-    story.append(date_text)
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Design Overview
-    story.append(Paragraph("<b>Design Overview</b>", styles['Heading2']))
-    
-    design_data = [
-        ['Design Type', metrics.get('Type', 'Full Factorial Design')],
-        ['Runs', metrics.get('Runs', '840')],
-        ['Factors', metrics.get('Factors', '3 (Transceiver, Rack Unit, Fan Speed)')],
-        ['Response', 'Interface Temperature'],
-    ]
-    
-    design_table = Table(design_data, colWidths=[2.5*inch, 3.5*inch])
-    design_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-    ]))
-    story.append(design_table)
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Factor Levels
-    story.append(Paragraph("<b>Factor Levels</b>", styles['Heading2']))
-    
-    factor_data = [
-        ['Factor', 'Type', 'Levels', 'Description'],
-        ['Transceiver Manufacturer', 'Categorical', '10', 'Accelight, CENTERA, Eoptolink, Finisar, Hisense, Intel Corp, Ligent Photonics, NON-JNPR, O-NET, Others'],
-        ['Rack Unit', 'Categorical', '42', 'Integer values from 1 to 42'],
-        ['Fan Speed Range', 'Categorical', '2', 'Low (< 9,999 rpm), High (>= 10,000 rpm)'],
-    ]
-    
-    factor_table = Table(factor_data, colWidths=[1.5*inch, 1.2*inch, 0.8*inch, 2.5*inch])
-    factor_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-    ]))
-    story.append(factor_table)
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Note
-    note = Paragraph(
-        "<font size=8><i>Note: This is a summary PDF. For complete design tables and interactive visualizations, see the HTML report: doe_design.html</i></font>",
-        styles['Normal']
-    )
-    story.append(note)
-    
-    doc.build(story)
-
-
-def _create_analysis_summary_pdf(pdf_path, metrics, model_type='Full'):
-    """Create an analysis summary PDF."""
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib import colors
-    from datetime import datetime
-    
-    doc = SimpleDocTemplate(pdf_path, pagesize=letter)
-    story = []
-    styles = getSampleStyleSheet()
-    
-    # Title
-    title = Paragraph(f"<b>{model_type} DOE Model Analysis Summary</b>", styles['Heading1'])
-    story.append(title)
-    story.append(Spacer(1, 0.2*inch))
-    
-    # Date
-    date_text = Paragraph(f"<font size=9>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</font>", styles['Normal'])
-    story.append(date_text)
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Model Statistics
-    story.append(Paragraph("<b>Model Fit Statistics</b>", styles['Heading2']))
-    
-    stats_data = [
-        ['Metric', 'Value'],
-        ['R-squared', metrics.get('R-squared', 'N/A')],
-        ['Adjusted R-squared', metrics.get('Adj R-squared', 'N/A')],
-        ['F-statistic', metrics.get('F-statistic', 'N/A')],
-        ['Parameters', metrics.get('Parameters', 'N/A')],
-    ]
-    
-    stats_table = Table(stats_data, colWidths=[2.5*inch, 3.5*inch])
-    stats_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-    ]))
-    story.append(stats_table)
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Info
-    info = Paragraph(
-        f"<font size=8><i>This is a summary PDF with key metrics. For complete analysis including ANOVA tables, "
-        f"residual plots, and interactive visualizations, see the HTML report: doe_analysis_report.html</i></font>",
-        styles['Normal']
-    )
-    story.append(info)
-    
-    doc.build(story)
-
-
-def _create_reduced_summary_pdf(pdf_path, reduced_metrics, full_metrics):
-    """Create a reduced model summary PDF."""
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib import colors
-    from datetime import datetime
-    
-    doc = SimpleDocTemplate(pdf_path, pagesize=letter)
-    story = []
-    styles = getSampleStyleSheet()
-    
-    # Title
-    title = Paragraph("<b>DOE Reduced Model Summary & Comparison</b>", styles['Heading1'])
-    story.append(title)
-    story.append(Spacer(1, 0.2*inch))
-    
-    # Date
-    date_text = Paragraph(f"<font size=9>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</font>", styles['Normal'])
-    story.append(date_text)
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Model Comparison
-    story.append(Paragraph("<b>Full vs Reduced Model Comparison</b>", styles['Heading2']))
-    
-    comp_data = [
-        ['Metric', 'Full Model', 'Reduced Model'],
-        ['R-squared', full_metrics.get('R-squared', 'N/A'), reduced_metrics.get('R-squared', 'N/A')],
-        ['Adjusted R-squared', full_metrics.get('Adj R-squared', 'N/A'), reduced_metrics.get('Adj R-squared', 'N/A')],
-        ['F-statistic', full_metrics.get('F-statistic', 'N/A'), reduced_metrics.get('F-statistic', 'N/A')],
-        ['Parameters', full_metrics.get('Parameters', '820'), reduced_metrics.get('Parameters', '451')],
-    ]
-    
-    comp_table = Table(comp_data, colWidths=[2*inch, 2.25*inch, 2.25*inch])
-    comp_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-    ]))
-    story.append(comp_table)
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Benefits
-    story.append(Paragraph("<b>Reduced Model Benefits</b>", styles['Heading2']))
-    benefits_text = """
-    <font size=9>
-    • <b>795 non-significant terms removed</b> (97% parameter reduction)<br/>
-    • <b>Minimal performance impact:</b> R² decrease of only 0.45% (0.3897 → 0.3852)<br/>
-    • <b>Improved interpretability:</b> Focuses on 25 significant terms only<br/>
-    • <b>Adequate fit:</b> Lack-of-fit test p-value = 0.121 (no significant lack of fit)<br/>
-    • <b>Computational efficiency:</b> Simpler model for predictions and deployment
-    </font>
-    """
-    story.append(Paragraph(benefits_text, styles['Normal']))
-    story.append(Spacer(1, 0.3*inch))
-    
-    # Note
-    note = Paragraph(
-        "<font size=8><i>For detailed analysis, ANOVA tables, LOF test results, and interactive plots, "
-        "see the complete HTML report: doe_analysis_reduced.html</i></font>",
-        styles['Normal']
-    )
-    story.append(note)
-    
-    doc.build(story)
-
