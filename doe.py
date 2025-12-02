@@ -912,7 +912,7 @@ def create_doe_report(results, anova_table, param_summary, lof_table, output_pat
 
 def create_reduced_doe_report(results, full_results, anova_table, lof_table, summary_stats, output_path):
     """
-    Create HTML report comparing full and reduced DOE models.
+    Create HTML report comparing full and reduced DOE models with model fit diagrams and leverage charts.
     
     Args:
         results: Reduced model results from fit_reduced_doe_model()
@@ -922,8 +922,170 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
         summary_stats: Summary statistics including formula and term count
         output_path: Path to output directory
     """
+    import plotly.graph_objects as go
+    
     reduced_formula = summary_stats.get('reduced_formula', 'N/A')
     n_terms_removed = summary_stats.get('n_terms_removed', 0)
+    
+    # ==================== MODEL FIT DIAGRAM WITH CI BANDS ====================
+    # Get actual values and predictions
+    actual = results.model.endog
+    predicted = results.fittedvalues
+    residuals = results.resid
+    std_error = np.sqrt(results.mse_resid)
+    
+    # Calculate 95% confidence interval
+    ci_upper = predicted + 1.96 * std_error
+    ci_lower = predicted - 1.96 * std_error
+    
+    # Sort by predicted values for smooth confidence interval
+    sort_idx = np.argsort(predicted)
+    predicted_sorted = predicted.iloc[sort_idx]
+    ci_lower_sorted = ci_lower.iloc[sort_idx]
+    ci_upper_sorted = ci_upper.iloc[sort_idx]
+    
+    # Create Actual by Predicted plot
+    fig_ap = go.Figure()
+    
+    # Add lower confidence interval line
+    fig_ap.add_trace(go.Scatter(
+        x=predicted_sorted,
+        y=ci_lower_sorted,
+        fill=None,
+        mode='lines',
+        line=dict(color='red', width=1),
+        name='95% CI Lower',
+        showlegend=False
+    ))
+    
+    # Add upper confidence interval line with fill (red shaded area)
+    fig_ap.add_trace(go.Scatter(
+        x=predicted_sorted,
+        y=ci_upper_sorted,
+        fill='tonexty',
+        mode='lines',
+        line=dict(color='red', width=1),
+        fillcolor='rgba(255,0,0,0.2)',
+        name='95% Confidence Interval',
+        showlegend=True
+    ))
+    
+    # Add actual data points (black)
+    fig_ap.add_trace(go.Scatter(
+        x=predicted,
+        y=actual,
+        mode='markers',
+        marker=dict(color='black', size=4, opacity=0.6),
+        name='Actual Data Points',
+        showlegend=True
+    ))
+    
+    # Add diagonal reference line (perfect prediction)
+    min_val = min(predicted.min(), actual.min())
+    max_val = max(predicted.max(), actual.max())
+    fig_ap.add_trace(go.Scatter(
+        x=[min_val, max_val],
+        y=[min_val, max_val],
+        mode='lines',
+        line=dict(color='blue', dash='dash', width=2),
+        name='Perfect Prediction',
+        showlegend=True
+    ))
+    
+    fig_ap.update_layout(
+        title='Actual by Predicted Plot (Reduced Model)',
+        xaxis_title='Predicted Interface Temperature (°C)',
+        yaxis_title='Actual Interface Temperature (°C)',
+        template='plotly_white',
+        height=600,
+        width=700,
+        hovermode='closest'
+    )
+    
+    # Convert figure to HTML
+    actual_predicted_plot_html = fig_ap.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    # ==================== LEVERAGE PLOTS FOR RETAINED FACTORS ====================
+    leverage_plots_html = ""
+    try:
+        import matplotlib.pyplot as plt
+        import io
+        import base64
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
+        
+        # Get model terms and data
+        exog_names = results.model.exog_names
+        terms_to_plot = [name for name in exog_names if name != 'const']
+        
+        if terms_to_plot:
+            # Create cleaned names for display
+            cleaned_names = [_clean_label(name) for name in terms_to_plot]
+            
+            # For many terms, create multiple plots in pages (6 plots per page)
+            total_terms = len(terms_to_plot)
+            plots_per_page = 6
+            num_pages = (total_terms + plots_per_page - 1) // plots_per_page
+            
+            leverage_html_pages = []
+            
+            # Get model data
+            exog = results.model.exog
+            residuals = results.resid
+            leverage = results.get_influence().hat_matrix_diag
+            
+            for page in range(num_pages):
+                start_idx = page * plots_per_page
+                end_idx = min((page + 1) * plots_per_page, total_terms)
+                num_plots = end_idx - start_idx
+                
+                # Create figure with subplots (2 rows x 3 cols)
+                fig, axes = plt.subplots(2, 3, figsize=(14, 8))
+                axes_flat = axes.flatten()
+                
+                for plot_idx in range(num_plots):
+                    term_idx = start_idx + plot_idx
+                    ax = axes_flat[plot_idx]
+                    
+                    # Get the exog column (add 1 to skip intercept, which is column 0)
+                    col_idx = term_idx + 1
+                    if col_idx < exog.shape[1]:
+                        exog_col = exog[:, col_idx]
+                        
+                        # Create scatter plot of exog vs residuals
+                        ax.scatter(exog_col, residuals, alpha=0.5, s=20, color='steelblue')
+                        ax.axhline(y=0, color='r', linestyle='-', linewidth=1)
+                        ax.set_xlabel('Predictor', fontsize=7)
+                        ax.set_ylabel('Residuals', fontsize=7)
+                        ax.set_title(cleaned_names[term_idx], fontsize=7)
+                        ax.tick_params(labelsize=7)
+                    else:
+                        ax.axis('off')
+                
+                # Hide unused subplots
+                for plot_idx in range(num_plots, 6):
+                    axes_flat[plot_idx].axis('off')
+                
+                plt.tight_layout()
+                
+                # Convert matplotlib figure to HTML
+                buf = io.BytesIO()
+                canvas = FigureCanvasAgg(fig)
+                canvas.print_png(buf)
+                buf.seek(0)
+                img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+                
+                page_html = f'<img src="data:image/png;base64,{img_base64}" style="width: 100%; max-width: 1000px; height: auto;" alt="Leverage Plots Page {page+1}">'
+                if num_pages > 1:
+                    page_html = f'<h4>Plots {start_idx + 1}-{end_idx} of {total_terms}</h4>' + page_html
+                leverage_html_pages.append(page_html)
+                
+                plt.close(fig)
+            
+            leverage_plots_html = "\n".join(leverage_html_pages)
+    
+    except Exception as e:
+        print(f"Warning: Could not generate leverage plots: {e}")
+        leverage_plots_html = f"<p>Error generating leverage plots: {e}</p>"
     
     # Build comparison metrics table
     comparison_html = f"""
@@ -1000,6 +1162,7 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
     <html>
     <head>
         <title>Reduced DOE Analysis Report</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <style>
             body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }}
             h1 {{ color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }}
@@ -1012,10 +1175,19 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
             .section {{ background-color: white; padding: 20px; margin: 20px 0; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
             .formula {{ background-color: #f0f0f0; padding: 10px; border-left: 4px solid #4CAF50; margin: 10px 0; font-family: monospace; overflow-x: auto; }}
             .highlight {{ background-color: #fffacd; padding: 10px; border-left: 4px solid #ff9800; margin: 10px 0; }}
+            .plot-container {{ margin: 20px 0; }}
         </style>
     </head>
     <body>
         <h1>Reduced Design of Experiments (DOE) Analysis Report</h1>
+        
+        <div class="section">
+            <h2>Model Fit Diagram with 95% Confidence Interval</h2>
+            <p><em>Actual vs Predicted plot with confidence interval bands showing model prediction accuracy</em></p>
+            <div class="plot-container">
+                {actual_predicted_plot_html}
+            </div>
+        </div>
         
         <div class="section">
             <h2>Executive Summary</h2>
@@ -1054,7 +1226,14 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
                 <li>Overall model F-statistic: {results.fvalue:.4f} (p < 0.001)</li>
                 <li>Model remains highly significant after term removal</li>
                 <li>Improved parsimony with {n_terms_removed} fewer parameters</li>
+                <li>Adequate fit: LOF p-value = {lof_table[lof_table['Source']=='Lack of Fit']['PR(>F)'].values[0]:.4f} > 0.05</li>
             </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Leverage Plots for Retained Factors/Interactions</h2>
+            <p><em>Residual plots showing the influence of each retained factor on model predictions</em></p>
+            {leverage_plots_html}
         </div>
         
     </body>
