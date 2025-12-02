@@ -1266,7 +1266,7 @@ def convert_html_to_pdf(output_dir='outputs'):
     Returns:
         dict: Conversion status for each file
     """
-    from pdf_generator import create_design_summary_pdf, create_analysis_summary_pdf, create_reduced_summary_pdf
+    from pdf_generator_enhanced import create_design_summary_pdf, create_analysis_summary_pdf, create_reduced_model_pdf_with_visuals
     
     output_path = Path(output_dir)
     
@@ -1275,7 +1275,7 @@ def convert_html_to_pdf(output_dir='outputs'):
     print("="*80 + "\n")
     
     print("📋 HTML reports are the complete deliverables with full interactive content")
-    print("📄 PDF files created as comprehensive reference summaries\n")
+    print("📄 PDF files created with visualizations and comprehensive reference data\n")
     
     conversion_status = {}
     
@@ -1306,12 +1306,13 @@ def convert_html_to_pdf(output_dir='outputs'):
             print(f"✗ doe_analysis_report_summary.pdf: {str(e)[:60]}")
             conversion_status['doe_analysis_report.html'] = 'failed'
         
-        # 3. Create Reduced Model Summary PDF
+        # 3. Create Reduced Model PDF with all visualizations
         try:
-            reduced_path = output_path / 'doe_analysis_reduced.html'
-            if reduced_path.exists():
+            reduced_html_path = output_path / 'doe_analysis_reduced.html'
+            if reduced_html_path.exists():
                 pdf_path = output_path / 'doe_analysis_reduced_summary.pdf'
-                create_reduced_summary_pdf(str(pdf_path))
+                # Use enhanced PDF generator with image extraction
+                create_reduced_model_pdf_with_visuals(str(pdf_path), str(reduced_html_path))
                 pdf_size = pdf_path.stat().st_size / (1024 * 1024)
                 print(f"✓ doe_analysis_reduced_summary.pdf ({pdf_size:.3f} MB)")
                 conversion_status['doe_analysis_reduced.html'] = 'success'
@@ -1326,8 +1327,8 @@ def convert_html_to_pdf(output_dir='outputs'):
     print("\n" + "="*80)
     print("PDF SUMMARY GENERATION COMPLETE")
     print("="*80)
-    print("�� Note: HTML files contain complete analysis with interactive plots")
-    print("📌 PDF summaries provide comprehensive reference of all metrics and statistics")
+    print("📊 Reduced model PDF now includes all visualizations and charts!")
+    print("� HTML files contain complete analysis with interactive plots")
     print("="*80 + "\n")
     
     return conversion_status
