@@ -239,6 +239,157 @@ def extract_html_tables(html_path):
         return []
 
 
+def extract_interaction_plots_from_html(html_path):
+    """
+    Extract Plotly interaction plots from HTML file as PNG images.
+    
+    Renders each Plotly figure in the Interaction Plots section to PNG format.
+    
+    Args:
+        html_path (str): Path to HTML file
+        
+    Returns:
+        list: List of (plot_name, image_io) tuples for interaction plots
+    """
+    try:
+        with open(html_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        interaction_plots = []
+        
+        # Find the Interaction Plots section
+        match = re.search(
+            r'<h2>Interaction Plot[s]*.*?</h2>(.*?)(?=<h2>|</body>)',
+            html_content,
+            re.DOTALL | re.IGNORECASE
+        )
+        
+        if not match:
+            print("  ! No interaction plots section found in HTML")
+            return []
+        
+        interaction_section = match.group(1)
+        
+        # Extract Plotly div IDs - look for id attribute in divs with plotly-graph-div class
+        # Pattern: <div id="UUID" class="plotly-graph-div" ...></div>
+        div_pattern = r'<div\s+id="([a-f0-9\-]+)"\s+class="plotly-graph-div"'
+        div_matches = re.findall(div_pattern, interaction_section)
+        
+        if not div_matches:
+            print("  ! No Plotly divs found in interaction plots section")
+            return []
+        
+        print(f"  Found {len(div_matches)} interaction plot div(s)")
+        
+        # Extract plot data from the Plotly initialization scripts
+        plot_counter = 0
+        for div_id in div_matches:
+            try:
+                # Find the Plotly.newPlot call for this specific div
+                # Pattern: Plotly.newPlot(...div_id..., [...], {...}, ...)
+                # Use flexible whitespace pattern since HTML has extra spaces
+                pattern = rf'Plotly\.newPlot\s*\(\s*["\']?{re.escape(div_id)}["\']?\s*,'
+                pattern_match = re.search(pattern, html_content, re.DOTALL)
+                
+                if not pattern_match:
+                    print(f"    ! Could not find plot call for div: {div_id}")
+                    continue
+                
+                pattern_start = pattern_match.start()
+                
+                # Find data array [...]
+                # Start searching after the comma following the div ID
+                extract_start = pattern_match.end()
+                bracket_pos = html_content.find('[', extract_start)
+                if bracket_pos == -1 or bracket_pos > extract_start + 100:
+                    continue
+                
+                # Count nested brackets to find end of data array
+                bracket_count = 0
+                data_end = bracket_pos
+                for i in range(bracket_pos, len(html_content)):
+                    if html_content[i] == '[':
+                        bracket_count += 1
+                    elif html_content[i] == ']':
+                        bracket_count -= 1
+                        if bracket_count == 0:
+                            data_end = i + 1
+                            break
+                
+                data_str = html_content[bracket_pos:data_end]
+                
+                # Find layout object {...}
+                # Start searching after data array
+                brace_pos = html_content.find('{', data_end)
+                if brace_pos == -1 or brace_pos > data_end + 100:
+                    continue
+                
+                # Count nested braces to find end of layout object
+                brace_count = 0
+                layout_end = brace_pos
+                for i in range(brace_pos, len(html_content)):
+                    if html_content[i] == '{':
+                        brace_count += 1
+                    elif html_content[i] == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            layout_end = i + 1
+                            break
+                
+                layout_str = html_content[brace_pos:layout_end]
+                
+                # Parse JSON
+                data = json.loads(data_str)
+                layout = json.loads(layout_str)
+                
+                # Create Plotly figure
+                fig = go.Figure(data=data, layout=layout)
+                
+                # Render to PNG
+                img_bytes = to_image(fig, format='png', width=900, height=600)
+                image_io = BytesIO(img_bytes)
+                
+                plot_title = layout.get('title', {})
+                if isinstance(plot_title, dict):
+                    plot_title = plot_title.get('text', f'Interaction Plot {plot_counter + 1}')
+                else:
+                    plot_title = str(plot_title)
+                
+                interaction_plots.append((plot_title, image_io))
+                plot_counter += 1
+                print(f"    ✓ Rendered: {plot_title}")
+                
+            except Exception as e:
+                print(f"    ! Could not parse plot data for div {div_id}: {str(e)[:100]}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        if not interaction_plots:
+            # Try alternative extraction method - look for base64 images in div elements
+            print("  Trying alternative extraction method...")
+            img_pattern = r'<img[^>]*src="(data:image/png;base64,[^"]+)"'
+            img_matches = re.findall(img_pattern, interaction_section)
+            
+            for idx, img_src in enumerate(img_matches):
+                try:
+                    base64_data = img_src.split(',')[1]
+                    image_bytes = base64.b64decode(base64_data)
+                    image_io = BytesIO(image_bytes)
+                    interaction_plots.append((f'Interaction Plot {idx + 1}', image_io))
+                    print(f"    ✓ Extracted image {idx + 1}")
+                except Exception as e:
+                    print(f"    ! Could not extract image {idx}: {e}")
+        
+        return interaction_plots
+        
+    except Exception as e:
+        print(f"  Error extracting interaction plots: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+
 def create_title_slide(prs, title, subtitle=""):
     """
     Create a title slide.
@@ -628,7 +779,17 @@ def create_full_model_powerpoint(html_path, output_path, title="DOE Full Model A
             create_content_slide(prs, "Parameter Table (Sorted by P-value, Low to High)", "table", param_display)
             print("  ✓ Added Parameter Table slide")
         
-        # SLIDE 7+: Leverage Plots (all leverage plot images)
+        # SLIDE 7: Interaction Plots
+        print("  Extracting interaction plots from HTML...")
+        interaction_plots = extract_interaction_plots_from_html(html_path)
+        if interaction_plots:
+            for plot_title, plot_image in interaction_plots:
+                create_content_slide(prs, plot_title, "image", plot_image)
+            print(f"  ✓ Added {len(interaction_plots)} Interaction Plot slides")
+        else:
+            print("  ℹ No interaction plots found in HTML")
+        
+        # SLIDE 8+: Leverage Plots (all leverage plot images)
         leverage_count = 0
         for idx, image_io in enumerate(images):
             if leverage_count > 50:  # Limit leverage plots to 50
@@ -769,7 +930,17 @@ def create_reduced_model_powerpoint(html_path, output_path, title="DOE Reduced M
             create_content_slide(prs, "Parameter Table (Sorted by P-value, Low to High)", "table", param_display)
             print("  ✓ Added Parameter Table slide")
         
-        # SLIDE 7+: Leverage Plots (all leverage plot images)
+        # SLIDE 7: Interaction Plots
+        print("  Extracting interaction plots from HTML...")
+        interaction_plots = extract_interaction_plots_from_html(html_path)
+        if interaction_plots:
+            for plot_title, plot_image in interaction_plots:
+                create_content_slide(prs, plot_title, "image", plot_image)
+            print(f"  ✓ Added {len(interaction_plots)} Interaction Plot slides")
+        else:
+            print("  ℹ No interaction plots found in HTML")
+        
+        # SLIDE 8+: Leverage Plots (all leverage plot images)
         leverage_count = 0
         for idx, image_io in enumerate(images):
             if leverage_count > 50:  # Limit leverage plots to 50
