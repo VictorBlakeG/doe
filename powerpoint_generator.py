@@ -964,8 +964,114 @@ def create_reduced_model_powerpoint(html_path, output_path, title="DOE Reduced M
         return False
 
 
+def add_side_by_side_leverage_comparisons(prs, full_html, reduced_html):
+    """
+    Add side-by-side comparison slides of leverage plots from full and reduced models.
+    Extracts leverage plots (all images except first) from both HTML files and creates
+    paired comparison slides.
+    
+    Args:
+        prs (Presentation): PowerPoint presentation object
+        full_html (str): Path to full model HTML report
+        reduced_html (str): Path to reduced model HTML report
+        
+    Returns:
+        int: Number of comparison slides added
+    """
+    try:
+        # Extract leverage plots (skip first image which is model diagram)
+        full_images = extract_base64_images_from_html(full_html, max_images=150, skip_first=True)
+        reduced_images = extract_base64_images_from_html(reduced_html, max_images=150, skip_first=True)
+        
+        # Use minimum of both to ensure we can pair them
+        num_comparisons = min(len(full_images), len(reduced_images))
+        
+        if num_comparisons == 0:
+            print("  ! No leverage plots found in HTML files")
+            return 0
+        
+        # Create comparison slides (2 plots per slide, side by side)
+        slides_added = 0
+        for idx in range(num_comparisons):
+            # Reset BytesIO pointers for reuse
+            full_images[idx].seek(0)
+            reduced_images[idx].seek(0)
+            
+            # Create a blank slide layout
+            blank_layout = prs.slide_layouts[6]  # Blank layout
+            slide = prs.slides.add_slide(blank_layout)
+            
+            # Add title
+            left = Inches(0.5)
+            top = Inches(0.3)
+            width = Inches(9)
+            height = Inches(0.5)
+            txBox = slide.shapes.add_textbox(left, top, width, height)
+            tf = txBox.text_frame
+            tf.text = f"Leverage Comparison {idx + 1}: Full Model vs Reduced Model"
+            tf.paragraphs[0].font.size = Pt(18)
+            tf.paragraphs[0].font.bold = True
+            
+            # Add full model plot (left side)
+            try:
+                from PIL import Image
+                full_pil = Image.open(full_images[idx])
+                left_img = Inches(0.3)
+                top_img = Inches(1)
+                width_img = Inches(4.5)
+                
+                # Calculate height to maintain aspect ratio
+                aspect_ratio = full_pil.height / full_pil.width
+                height_img = width_img * aspect_ratio
+                
+                # Add to slide
+                slide.shapes.add_picture(BytesIO(full_images[idx].getvalue() if hasattr(full_images[idx], 'getvalue') else full_images[idx].read()),
+                                        left_img, top_img, width=width_img)
+                
+                # Add label
+                label_box = slide.shapes.add_textbox(left_img, top_img - Inches(0.3), width_img, Inches(0.3))
+                label_tf = label_box.text_frame
+                label_tf.text = "Full Model"
+                label_tf.paragraphs[0].font.size = Pt(12)
+                label_tf.paragraphs[0].font.bold = True
+            except Exception as e:
+                print(f"  ! Error adding full model plot to slide {idx + 1}: {str(e)[:50]}")
+            
+            # Add reduced model plot (right side)
+            try:
+                from PIL import Image
+                reduced_pil = Image.open(reduced_images[idx])
+                left_img = Inches(5.2)
+                top_img = Inches(1)
+                width_img = Inches(4.5)
+                
+                slide.shapes.add_picture(BytesIO(reduced_images[idx].getvalue() if hasattr(reduced_images[idx], 'getvalue') else reduced_images[idx].read()),
+                                        left_img, top_img, width=width_img)
+                
+                # Add label
+                label_box = slide.shapes.add_textbox(left_img, top_img - Inches(0.3), width_img, Inches(0.3))
+                label_tf = label_box.text_frame
+                label_tf.text = "Reduced Model"
+                label_tf.paragraphs[0].font.size = Pt(12)
+                label_tf.paragraphs[0].font.bold = True
+            except Exception as e:
+                print(f"  ! Error adding reduced model plot to slide {idx + 1}: {str(e)[:50]}")
+            
+            slides_added += 1
+        
+        print(f"  ✓ Added {slides_added} side-by-side leverage comparison slides")
+        return slides_added
+        
+    except Exception as e:
+        print(f"  ! Error creating side-by-side leverage comparisons: {str(e)[:100]}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
+
 def create_comparison_powerpoint(full_html, reduced_html, output_path, 
-                                  title="Full vs Reduced Model Comparison"):
+                                  title="Full vs Reduced Model Comparison",
+                                  include_side_by_side_leverage=True):
     """
     Create a PowerPoint presentation comparing full and reduced models.
     
@@ -974,6 +1080,7 @@ def create_comparison_powerpoint(full_html, reduced_html, output_path,
         reduced_html (str): Path to reduced model HTML report
         output_path (str): Path to save PowerPoint file
         title (str): Presentation title
+        include_side_by_side_leverage (bool): If True, add side-by-side leverage plot comparisons instead of individual plots
         
     Returns:
         bool: True if successful, False otherwise
@@ -1028,6 +1135,12 @@ Verdict: Successful model reduction with maintained prediction accuracy
         for idx, image_io in enumerate(reduced_images[:10]):
             slide = create_content_slide(prs, f"Reduced Model - Chart {idx + 1}", "image", image_io)
         
+        # Add side-by-side leverage comparisons if requested
+        if include_side_by_side_leverage:
+            create_content_slide(prs, "Leverage Plot Comparisons", "text",
+                               "Side-by-side comparison of leverage plots from full and reduced models")
+            add_side_by_side_leverage_comparisons(prs, full_html, reduced_html)
+        
         # Save presentation
         prs.save(output_path)
         print(f"✓ Comparison PowerPoint saved: {output_path}")
@@ -1035,6 +1148,8 @@ Verdict: Successful model reduction with maintained prediction accuracy
         
     except Exception as e:
         print(f"Error creating comparison PowerPoint presentation: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
