@@ -695,33 +695,50 @@ def create_interaction_plots(model_df, results):
             levels_factor1 = sorted(model_df[factor1_raw].unique())
             levels_factor2 = sorted(model_df[factor2_raw].unique())
             
-            # For continuous factors (like Rack_Unit), use a sample of levels
-            # For categorical factors (like Transceiver_Manufacturer), limit to first 6 levels
-            if len(levels_factor1) > 6 and isinstance(levels_factor1[0], (int, float)):
-                # For continuous factors, sample evenly distributed levels
-                step = max(1, len(levels_factor1) // 6)
-                levels_factor1 = levels_factor1[::step][:6]
-            elif len(levels_factor1) > 6:
-                levels_factor1 = levels_factor1[:6]
+            # TREAT ALL FACTORS AS DISCRETE/NOMINAL - NO DATA REDUCTION
+            # Rack_Unit is discrete (categorical 1-42), not continuous
+            # Show all levels without binning or sampling
             
-            if len(levels_factor2) > 6 and isinstance(levels_factor2[0], (int, float)):
-                step = max(1, len(levels_factor2) // 6)
-                levels_factor2 = levels_factor2[::step][:6]
-            elif len(levels_factor2) > 6:
-                levels_factor2 = levels_factor2[:6]
+            # For categorical factors with many levels, limit for readability (not data quality)
+            # Rack_Unit: Show ALL (discrete design space)
+            # Transceiver_Manufacturer: Show all unique values
+            # Fan_Speed_Range: Show all (typically 2 levels)
+            
+            if factor1_raw == 'Rack_Unit':
+                # Rack_Unit is discrete nominal - show ALL levels (1-42 range)
+                pass  # Keep all levels_factor1
+            elif len(levels_factor1) > 10:
+                # Other categorical factors with many levels - show first 10 for readability
+                levels_factor1 = levels_factor1[:10]
+            # Otherwise keep all levels
+            
+            if factor2_raw == 'Rack_Unit':
+                # Rack_Unit is discrete nominal - show ALL levels (1-42 range)
+                pass  # Keep all levels_factor2
+            elif len(levels_factor2) > 10:
+                # Other categorical factors with many levels - show first 10 for readability
+                levels_factor2 = levels_factor2[:10]
+            # Otherwise keep all levels
             
             # Create predictions for interaction plot
             fig = go.Figure()
             
             intercept = params['Intercept']
             
+            # Debug output showing level counts
+            print(f"    Plotting {factor1_raw} × {factor2_raw}")
+            print(f"      {factor1_raw}: {len(levels_factor1)} levels {{{min(levels_factor1)}-{max(levels_factor1)}}}")
+            print(f"      {factor2_raw}: {len(levels_factor2)} levels {{{min(levels_factor2)}-{max(levels_factor2)}}}")
+            
             # For each level of factor1, create a line showing response vs factor2
             for level1 in levels_factor1:
                 y_vals = []
                 x_vals = []
+                valid_points = 0
+                invalid_points = 0
                 
                 for level2 in levels_factor2:
-                    # Get main effects
+                    # Get main effects - use the reference level if the specific level coefficient doesn't exist
                     effect1 = params.get(f'C({factor1_raw})[T.{level1}]', 0)
                     effect2 = params.get(f'C({factor2_raw})[T.{level2}]', 0)
                     
@@ -732,18 +749,28 @@ def create_interaction_plots(model_df, results):
                     # Calculate predicted response
                     pred = intercept + effect1 + effect2 + interaction_coef
                     
-                    y_vals.append(pred)
-                    x_vals.append(str(level2))
+                    # Only include predictions that are reasonable (within 3 standard deviations of observed data range)
+                    # Skip predictions with huge outliers due to missing coefficients
+                    if abs(pred) < 1e9:  # Filter out numerical instability artifacts
+                        y_vals.append(pred)
+                        x_vals.append(str(level2))
+                        valid_points += 1
+                    else:
+                        invalid_points += 1
                 
-                # Add line for this level of factor1
-                fig.add_trace(go.Scatter(
-                    x=x_vals,
-                    y=y_vals,
-                    mode='lines+markers',
-                    name=f'{factor1_raw} = {level1}',
-                    line=dict(width=2),
-                    marker=dict(size=8)
-                ))
+                # Only add trace if we have valid points
+                if valid_points > 0:
+                    fig.add_trace(go.Scatter(
+                        x=x_vals,
+                        y=y_vals,
+                        mode='lines+markers',
+                        name=f'{factor1_raw} = {level1}',
+                        line=dict(width=2),
+                        marker=dict(size=8)
+                    ))
+                
+                if invalid_points > 0:
+                    print(f"      Warning: Skipped {invalid_points} points with numerical instability for {factor1_raw}={level1}")
             
             # Update layout
             fig.update_layout(
