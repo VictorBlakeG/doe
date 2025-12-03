@@ -272,7 +272,7 @@ def fit_doe_model(doe_df, output_dir='outputs'):
     }
     
     # Create HTML report
-    create_doe_report(results, anova_table, param_summary, lof_table, output_path)
+    create_doe_report(results, anova_table, param_summary, lof_table, model_df, output_path)
     
     return model, results, summary_stats
 
@@ -575,7 +575,7 @@ def fit_reduced_doe_model(doe_df, full_results, alpha=0.05, output_dir='outputs'
     }
     
     # Create HTML report
-    create_reduced_doe_report(results, full_results, anova_table, lof_table, summary_stats, output_path)
+    create_reduced_doe_report(results, full_results, anova_table, lof_table, model_df, summary_stats, output_path)
     
     # DEBUG: Print detailed comparison
     _debug_model_comparison(full_results, results, output_path)
@@ -634,7 +634,145 @@ def _clean_formula(formula_str):
     return cleaned
 
 
-def create_doe_report(results, anova_table, param_summary, lof_table, output_path):
+def create_interaction_plots(model_df, results):
+    """
+    Generate interaction plots for all unique factor pairs in 2-way interactions.
+    
+    Shows how the response varies as one factor changes, with separate lines for levels of another factor.
+    One plot is generated per unique factor pair interaction.
+    
+    Args:
+        model_df (pd.DataFrame): Model data with predictors and response
+        results: Fitted regression results from statsmodels
+        
+    Returns:
+        str: HTML string with embedded Plotly figures for interactions
+    """
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    
+    # Extract all parameters from the model
+    params = results.params
+    
+    # Find all 2-way interaction terms from the model
+    interaction_terms = [p for p in params.index if ':' in p and p.count(':') == 1 and p != 'Intercept']
+    
+    if not interaction_terms:
+        return "<p>No significant 2-way interactions found in the model.</p>"
+    
+    # Extract unique factor pairs (not individual level pairs)
+    factor_pairs = set()
+    for interaction_term in interaction_terms:
+        try:
+            # Parse: C(Factor1)[T.level1]:C(Factor2)[T.level2]
+            parts = interaction_term.split(':')
+            if len(parts) != 2:
+                continue
+            
+            factor1_raw = parts[0].replace('C(', '').replace(')', '').split('[')[0]
+            factor2_raw = parts[1].replace('C(', '').replace(')', '').split('[')[0]
+            
+            # Store as sorted tuple to avoid duplicates
+            factor_pair = tuple(sorted([factor1_raw, factor2_raw]))
+            factor_pairs.add(factor_pair)
+        except Exception:
+            continue
+    
+    if not factor_pairs:
+        return "<p>No significant 2-way interactions found in the model.</p>"
+    
+    print(f"  Found {len(factor_pairs)} unique factor pair interactions:")
+    for pair in sorted(factor_pairs):
+        print(f"    - {pair[0]} × {pair[1]}")
+    
+    html_plots = ""
+    plot_count = 0
+    
+    # Generate one plot per factor pair
+    for factor1_raw, factor2_raw in sorted(factor_pairs):
+        try:
+            # Get unique levels for each factor
+            levels_factor1 = sorted(model_df[factor1_raw].unique())
+            levels_factor2 = sorted(model_df[factor2_raw].unique())
+            
+            # For continuous factors (like Rack_Unit), use a sample of levels
+            # For categorical factors (like Transceiver_Manufacturer), limit to first 6 levels
+            if len(levels_factor1) > 6 and isinstance(levels_factor1[0], (int, float)):
+                # For continuous factors, sample evenly distributed levels
+                step = max(1, len(levels_factor1) // 6)
+                levels_factor1 = levels_factor1[::step][:6]
+            elif len(levels_factor1) > 6:
+                levels_factor1 = levels_factor1[:6]
+            
+            if len(levels_factor2) > 6 and isinstance(levels_factor2[0], (int, float)):
+                step = max(1, len(levels_factor2) // 6)
+                levels_factor2 = levels_factor2[::step][:6]
+            elif len(levels_factor2) > 6:
+                levels_factor2 = levels_factor2[:6]
+            
+            # Create predictions for interaction plot
+            fig = go.Figure()
+            
+            intercept = params['Intercept']
+            
+            # For each level of factor1, create a line showing response vs factor2
+            for level1 in levels_factor1:
+                y_vals = []
+                x_vals = []
+                
+                for level2 in levels_factor2:
+                    # Get main effects
+                    effect1 = params.get(f'C({factor1_raw})[T.{level1}]', 0)
+                    effect2 = params.get(f'C({factor2_raw})[T.{level2}]', 0)
+                    
+                    # Get interaction effect
+                    interaction_key = f'C({factor1_raw})[T.{level1}]:C({factor2_raw})[T.{level2}]'
+                    interaction_coef = params.get(interaction_key, 0)
+                    
+                    # Calculate predicted response
+                    pred = intercept + effect1 + effect2 + interaction_coef
+                    
+                    y_vals.append(pred)
+                    x_vals.append(str(level2))
+                
+                # Add line for this level of factor1
+                fig.add_trace(go.Scatter(
+                    x=x_vals,
+                    y=y_vals,
+                    mode='lines+markers',
+                    name=f'{factor1_raw} = {level1}',
+                    line=dict(width=2),
+                    marker=dict(size=8)
+                ))
+            
+            # Update layout
+            fig.update_layout(
+                title=f'Interaction Plot: {factor1_raw} × {factor2_raw}',
+                xaxis_title=f'{factor2_raw}',
+                yaxis_title='Predicted Interface Temperature (°C)',
+                hovermode='x unified',
+                template='plotly_white',
+                height=500,
+                width=700
+            )
+            
+            # Convert to HTML
+            plot_html = fig.to_html(full_html=False, include_plotlyjs=False)
+            html_plots += f"<div style='margin: 20px 0;'>{plot_html}</div>"
+            
+            plot_count += 1
+            print(f"    ✓ Generated: Interaction Plot: {factor1_raw} × {factor2_raw}")
+            
+        except Exception as e:
+            print(f"    ✗ Warning: Could not generate interaction plot for {factor1_raw} × {factor2_raw}: {e}")
+            continue
+    
+    print(f"  Total interaction plots generated: {plot_count}\n")
+    
+    return html_plots
+
+
+def create_doe_report(results, anova_table, param_summary, lof_table, model_df, output_path):
     """
     Create an HTML report with model results, tables, visualizations, and model formula.
     
@@ -643,6 +781,7 @@ def create_doe_report(results, anova_table, param_summary, lof_table, output_pat
         anova_table: ANOVA results
         param_summary: Parameter summary table
         lof_table: Lack-of-fit ANOVA table
+        model_df: Model data with predictors and response (for interaction plots)
         output_path: Path to output directory
     """
     # Extract and clean model formula (symbolic form)
@@ -908,6 +1047,10 @@ def create_doe_report(results, anova_table, param_summary, lof_table, output_pat
         print(f"Warning: Could not generate leverage plots: {e}")
         leverage_plots_html = f'<p style="color: #666;">Leverage plots could not be generated: {str(e)}</p>'
     
+    # Generate interaction plots
+    print("  Generating interaction plots...")
+    interaction_plots_html = create_interaction_plots(model_df, results)
+    
     # Create summary table
     summary_html = f"""
     <html>
@@ -996,6 +1139,14 @@ def create_doe_report(results, anova_table, param_summary, lof_table, output_pat
         </div>
         
         <div class="section">
+            <h2>Interaction Plots</h2>
+            <p>Interaction plots show how the response changes as one factor varies, with separate lines for different levels of another factor.</p>
+            <div class="plot-container">
+                {interaction_plots_html}
+            </div>
+        </div>
+        
+        <div class="section">
             <h2>Leverage Plots</h2>
             <p>Leverage plots show the relationship between each variable and the response, controlling for other variables in the model.</p>
             <div class="plot-container">
@@ -1013,7 +1164,7 @@ def create_doe_report(results, anova_table, param_summary, lof_table, output_pat
     print(f"Analysis report saved to: {html_file}\n")
 
 
-def create_reduced_doe_report(results, full_results, anova_table, lof_table, summary_stats, output_path):
+def create_reduced_doe_report(results, full_results, anova_table, lof_table, model_df, summary_stats, output_path):
     """
     Create HTML report comparing full and reduced DOE models with model fit diagrams and leverage charts.
     
@@ -1022,6 +1173,7 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
         full_results: Full model results from fit_doe_model()
         anova_table: Reduced model ANOVA table
         lof_table: Reduced model lack-of-fit table
+        model_df: Model data with predictors and response (for interaction plots)
         summary_stats: Summary statistics including formula and term count
         output_path: Path to output directory
     """
@@ -1260,6 +1412,10 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
     # LOF table HTML
     lof_html = lof_table.to_html()
     
+    # Generate interaction plots for reduced model
+    print("  Generating interaction plots...")
+    interaction_plots_html = create_interaction_plots(model_df, results)
+    
     # Build summary HTML
     summary_html = f"""
     <html>
@@ -1331,6 +1487,12 @@ def create_reduced_doe_report(results, full_results, anova_table, lof_table, sum
                 <li>Improved parsimony with {n_terms_removed} fewer parameters</li>
                 <li>Adequate fit: LOF p-value = {lof_table[lof_table['Source']=='Lack of Fit']['PR(>F)'].values[0]:.4f} > 0.05</li>
             </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Interaction Plots for Retained Factors</h2>
+            <p><em>Interaction plots show how the response changes as one factor varies, with separate lines for different levels of another factor</em></p>
+            {interaction_plots_html}
         </div>
         
         <div class="section">

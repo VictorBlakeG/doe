@@ -309,8 +309,31 @@ def create_reduced_model_pdf_enhanced(pdf_path, html_file_path):
     ))
     story.append(PageBreak())
     
-    # --- SECTION 6: LEVERAGE CHARTS ---
-    story.append(Paragraph("<b>6. Leverage Plots for Model Diagnostics</b>", heading2_style))
+    # --- SECTION 6: INTERACTION PLOTS ---
+    interaction_plots = extract_interaction_plots_from_html_for_pdf(html_file_path)
+    if interaction_plots:
+        story.append(Paragraph("<b>6. Interaction Plots</b>", heading2_style))
+        story.append(Paragraph(
+            "<font size=9>The following plots show how the response (Interface Temperature) varies as one factor changes, "
+            "with separate lines for different levels of another factor. Non-parallel lines indicate interaction effects.</font>",
+            styles['Normal']
+        ))
+        story.append(Spacer(1, 0.15*inch))
+        
+        for title, img_path in interaction_plots:
+            try:
+                if Path(img_path).exists():
+                    story.append(Paragraph(f"<b><font size=10>{title}</font></b>", styles['Heading3']))
+                    rl_image = RLImage(img_path, width=6.5*inch, height=4.3*inch)
+                    story.append(rl_image)
+                    story.append(Spacer(1, 0.2*inch))
+            except Exception as e:
+                pass
+        
+        story.append(PageBreak())
+    
+    # --- SECTION 7: LEVERAGE CHARTS ---
+    story.append(Paragraph("<b>7. Leverage Plots for Model Diagnostics</b>", heading2_style))
     story.append(Paragraph(
         "<font size=9>The following plots show residuals vs each predictor to assess model assumptions, "
         "identify outliers, and evaluate prediction accuracy across the factor space.</font>",
@@ -362,7 +385,8 @@ def create_reduced_model_pdf_enhanced(pdf_path, html_file_path):
     # Build PDF
     doc.build(story)
     print(f"✓ Created enhanced reduced model PDF: {pdf_path}")
-    print(f"  - Sections: Model fit, formula, summary, comparison, parameters, leverage charts")
+    print(f"  - Sections: Model fit, formula, summary, comparison, parameters, interaction plots, leverage charts")
+    print(f"  - Interaction plots: {len(interaction_plots)} embedded")
     print(f"  - Leverage plots: {images_added} embedded")
     
     return True
@@ -531,8 +555,31 @@ def create_full_model_pdf_enhanced(pdf_path, html_file_path):
     
     story.append(PageBreak())
     
-    # --- SECTION 5: LEVERAGE CHARTS ---
-    story.append(Paragraph("<b>5. Leverage Plots for Model Diagnostics</b>", heading2_style))
+    # --- SECTION 5: INTERACTION PLOTS ---
+    interaction_plots = extract_interaction_plots_from_html_for_pdf(html_file_path)
+    if interaction_plots:
+        story.append(Paragraph("<b>5. Interaction Plots</b>", heading2_style))
+        story.append(Paragraph(
+            "<font size=9>The following plots show how the response (Interface Temperature) varies as one factor changes, "
+            "with separate lines for different levels of another factor. Non-parallel lines indicate interaction effects.</font>",
+            styles['Normal']
+        ))
+        story.append(Spacer(1, 0.15*inch))
+        
+        for title, img_path in interaction_plots:
+            try:
+                if Path(img_path).exists():
+                    story.append(Paragraph(f"<b><font size=10>{title}</font></b>", styles['Heading3']))
+                    rl_image = RLImage(img_path, width=6.5*inch, height=4.3*inch)
+                    story.append(rl_image)
+                    story.append(Spacer(1, 0.2*inch))
+            except Exception as e:
+                pass
+        
+        story.append(PageBreak())
+    
+    # --- SECTION 6: LEVERAGE CHARTS ---
+    story.append(Paragraph("<b>6. Leverage Plots for Model Diagnostics</b>", heading2_style))
     story.append(Paragraph(
         "<font size=9>The following plots show residuals vs each predictor to assess model assumptions, "
         "identify outliers, and evaluate prediction accuracy across the factor space.</font>",
@@ -584,7 +631,8 @@ def create_full_model_pdf_enhanced(pdf_path, html_file_path):
     # Build PDF
     doc.build(story)
     print(f"✓ Created enhanced full model PDF: {pdf_path}")
-    print(f"  - Sections: Model fit, summary, ANOVA, coefficients (top 50), leverage charts")
+    print(f"  - Sections: Model fit, summary, ANOVA, coefficients (top 50), interaction plots, leverage charts")
+    print(f"  - Interaction plots: {len(interaction_plots)} embedded")
     print(f"  - Leverage plots: {images_added} embedded")
     
     return True
@@ -661,4 +709,113 @@ def extract_coefficients_from_html(html_file_path, top_n=50):
     except Exception as e:
         print(f"Error extracting coefficients: {e}")
         return None
+
+
+def extract_interaction_plots_from_html_for_pdf(html_path, output_dir='/tmp'):
+    """
+    Extract interaction plots from HTML and convert to PNG images for PDF embedding.
+    
+    Args:
+        html_path (str): Path to the HTML report
+        output_dir (str): Directory to save PNG images
+        
+    Returns:
+        list: List of tuples (title, image_path) for each interaction plot
+    """
+    import plotly.graph_objects as go
+    import json
+    
+    try:
+        with open(html_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Find interaction plots section
+        interaction_section = re.search(
+            r'<h2>Interaction Plot[s]*.*?</h2>(.*?)(?=<h2>|$)',
+            html_content,
+            re.DOTALL | re.IGNORECASE
+        )
+        
+        if not interaction_section:
+            return []
+        
+        # Extract div IDs for interaction plots
+        div_pattern = r'<div\s+id="([a-f0-9\-]+)"\s+class="plotly-graph-div"'
+        div_ids = re.findall(div_pattern, interaction_section.group(1))
+        
+        plots = []
+        
+        for div_id in div_ids:
+            try:
+                # Find Plotly.newPlot call for this div
+                pattern = rf'Plotly\.newPlot\s*\(\s*["\']?{re.escape(div_id)}["\']?\s*,'
+                pattern_match = re.search(pattern, html_content, re.DOTALL)
+                
+                if not pattern_match:
+                    continue
+                
+                # Extract data array (between [ and ])
+                data_start = pattern_match.end()
+                bracket_count = 0
+                data_end = None
+                for i in range(data_start, len(html_content)):
+                    if html_content[i] == '[':
+                        bracket_count += 1
+                    elif html_content[i] == ']':
+                        bracket_count -= 1
+                        if bracket_count == 0:
+                            data_end = i + 1
+                            break
+                
+                if not data_end:
+                    continue
+                
+                data_json = html_content[data_start:data_end]
+                data = json.loads(data_json)
+                
+                # Extract layout (between { and }, after data)
+                brace_start = data_end
+                while brace_start < len(html_content) and html_content[brace_start] != '{':
+                    brace_start += 1
+                
+                brace_count = 0
+                layout_end = None
+                for i in range(brace_start, len(html_content)):
+                    if html_content[i] == '{':
+                        brace_count += 1
+                    elif html_content[i] == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            layout_end = i + 1
+                            break
+                
+                if not layout_end:
+                    continue
+                
+                layout_json = html_content[brace_start:layout_end]
+                layout = json.loads(layout_json)
+                
+                # Get title from layout
+                title = layout.get('title', {})
+                if isinstance(title, dict):
+                    title = title.get('text', 'Interaction Plot')
+                
+                # Create Plotly figure and render to PNG
+                fig = go.Figure(data=data, layout=layout)
+                
+                # Convert to image
+                img_path = f"{output_dir}/interaction_plot_{len(plots)}.png"
+                fig.write_image(img_path, width=900, height=600, scale=2)
+                
+                plots.append((title, img_path))
+                
+            except Exception as e:
+                print(f"    Warning: Could not extract interaction plot {div_id}: {str(e)[:50]}")
+                continue
+        
+        return plots
+        
+    except Exception as e:
+        print(f"Warning: Could not extract interaction plots: {e}")
+        return []
 
