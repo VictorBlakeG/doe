@@ -18,98 +18,107 @@ def main():
     """
     print("\nStarting data processing pipeline...\n")
     
-    # Step 1: Load CSV data
-    print("Step 1: Loading CSV data...")
-    csv_raw_df = load_csv_data()
-    print("✓ CSV data loaded successfully\n")
+    # Step 1: Load fan speed dataframes from CSV
+    print("Step 1: Loading fan_low_df.csv and fan_high_df.csv...")
+    import pandas as pd
+    fan_low_df = pd.read_csv('outputs/fan_low_df.csv')
+    fan_high_df = pd.read_csv('outputs/fan_high_df.csv')
+    print(f"✓ fan_low_df loaded: {len(fan_low_df):,} rows")
+    print(f"✓ fan_high_df loaded: {len(fan_high_df):,} rows\n")
     
-    # Step 2: Show data summary
+    # Step 2: Show data summary for both dataframes
     print("Step 2: Displaying data summary...")
-    show_data_summary(csv_raw_df)
+    print("\n--- Low Speed Fans ---")
+    show_data_summary(fan_low_df)
+    print("\n--- High Speed Fans ---")
+    show_data_summary(fan_high_df)
+    print()
     
-    # Step 3: Remove missing data
+    # Step 3: Remove missing data for both dataframes
     print("Step 3: Removing rows with missing data...")
-    csv_clean_df = remove_missing_data(csv_raw_df)
+    fan_low_clean_df = remove_missing_data(fan_low_df)
+    fan_high_clean_df = remove_missing_data(fan_high_df)
+    print(f"Low speed dataframe after cleaning: {len(fan_low_clean_df):,} rows")
+    print(f"High speed dataframe after cleaning: {len(fan_high_clean_df):,} rows\n")
 
-    print(f"Starting dataframe has {len(csv_clean_df)} rows\n")
-
-    # Step 4: Calculate fan speed mean
-    print("Step 4: Calculating fan speed mean...")
-    mean_fan_df = calculate_fan_speed_mean(csv_clean_df)
-    print("✓ Fan speed mean calculated and added to dataframe\n")
+    # Step 4: Check if fan_speed_mean column exists
+    if 'fan_speed_mean' in fan_low_clean_df.columns and 'fan_speed_mean' in fan_high_clean_df.columns:
+        print("Step 4: fan_speed_mean column already exists in both dataframes - skipping\n")
+        fan_low_df_final = fan_low_clean_df
+        fan_high_df_final = fan_high_clean_df
+    else:
+        print("Step 4: Calculating fan speed mean for both dataframes...")
+        fan_low_df_final = calculate_fan_speed_mean(fan_low_clean_df)
+        fan_high_df_final = calculate_fan_speed_mean(fan_high_clean_df)
+        print("✓ Fan speed mean calculated for both dataframes\n")
     
-    # Step 5: Transceiver Manufacturer clean
+    # Step 5: Transceiver Manufacturer clean for both dataframes
     print("Step 5: Transceiver Manufacturer clean...")
-    clean_df = clean_tman(mean_fan_df)
-    print("✓ Transceiver manufacturer analysis and consolidation completed\n")
+    fan_low_clean_tman = clean_tman(fan_low_df_final)
+    fan_high_clean_tman = clean_tman(fan_high_df_final)
+    print("✓ Transceiver manufacturer analysis and consolidation completed for both dataframes\n")
     
-    # Step 6: Generate fan speed mean histogram
-    print("Step 6: Generating fan speed mean histogram...")
-    html_file = create_fan_speed_histogram(clean_df)
-    print(f"✓ Histogram generated: {html_file}\n")
+    # Step 6: Generate fan speed mean histogram for both dataframes
+    print("Step 6: Generating fan speed mean histograms...")
+    html_file_low = create_fan_speed_histogram(fan_low_clean_tman)
+    html_file_high = create_fan_speed_histogram(fan_high_clean_tman)
+    print(f"✓ Low speed histogram generated: {html_file_low}")
+    print(f"✓ High speed histogram generated: {html_file_high}\n")
     
-    # Step 7: Split fan data by speed threshold
-    print("Step 7: Splitting fan data by speed threshold...")
-    fan_low_df, fan_high_df = split_fan(clean_df)
-    print(f"✓ Fan data split successfully\n")
+    # Continue with the split data
+    print("Step 7: Preparing fan data for subsequent analysis...")
     
     # Display counts
     print("================================================================================")
     print("FAN SPEED DISTRIBUTION")
     print("================================================================================")
-    print(f"Low speed fans (< 11999):    {len(fan_low_df):,} rows")
-    print(f"High speed fans (>= 12000):  {len(fan_high_df):,} rows")
-    print(f"Total:                       {len(fan_low_df) + len(fan_high_df):,} rows")
+    print(f"Low speed fans (< 11999):    {len(fan_low_clean_tman):,} rows")
+    print(f"High speed fans (>= 12000):  {len(fan_high_clean_tman):,} rows")
+    print(f"Total:                       {len(fan_low_clean_tman) + len(fan_high_clean_tman):,} rows")
     print("================================================================================\n")
     
-    # Step 8: Export fan dataframes to CSV
-    print("Step 8: Exporting fan dataframes to CSV...")
-    low_csv_path, high_csv_path = export_fan_dfs_to_csv(fan_low_df, fan_high_df)
-    print(f"✓ Low speed fan data exported: {low_csv_path}")
-    print(f"✓ High speed fan data exported: {high_csv_path}\n")
-    
-    # Step 9: Balance dataframes to equal size
-    print("Step 9: Balancing dataframes to equal size...")
-    balanced_low_df, balanced_high_df = balance_dataframes(fan_low_df, fan_high_df)
+    # Step 8: Balance dataframes to equal size
+    print("Step 8: Balancing dataframes to equal size...")
+    balanced_low_df, balanced_high_df = balance_dataframes(fan_low_clean_tman, fan_high_clean_tman)
     print("✓ Dataframes balanced successfully\n")
     
-    # Step 10: Generate comparative histograms
-    print("Step 10: Generating comparative fan speed histograms...")
+    # Step 9: Generate comparative histograms
+    print("Step 9: Generating comparative fan speed histograms...")
     hl_html_file = create_fan_hl_histogram(balanced_low_df, balanced_high_df)
     print(f"✓ Comparative histogram generated: {hl_html_file}\n")
     
-    # Step 11: Generate interface temperature comparative histograms
-    print("Step 11: Generating interface temperature comparative histograms...")
+    # Step 10: Generate interface temperature comparative histograms
+    print("Step 10: Generating interface temperature comparative histograms...")
     ttemp_html_file = create_ttemp_hl_histogram(balanced_low_df, balanced_high_df)
     print(f"✓ Temperature histogram generated: {ttemp_html_file}\n")
     
-    # Step 12: Set up Design of Experiments
-    print("Step 12: Setting up Design of Experiments...")
+    # Step 11: Set up Design of Experiments
+    print("Step 11: Setting up Design of Experiments...")
     doe_df = setup_doe_design(balanced_low_df, balanced_high_df)
     print("✓ DOE design setup completed\n")
     
-    # Step 13: Create full-factorial design
-    print("Step 13: Creating full-factorial design...")
+    # Step 12: Create full-factorial design
+    print("Step 12: Creating full-factorial design...")
     design_table = create_full_factorial_design(doe_df)
     print("✓ Full-factorial design created\n")
     
-    # Step 14: Fit DOE model
-    print("Step 14: Fitting Design of Experiments model...")
+    # Step 13: Fit DOE model
+    print("Step 13: Fitting Design of Experiments model...")
     model, results, summary_stats = fit_doe_model(doe_df)
     print("✓ DOE model fit completed\n")
     
-    # Step 15: Fit reduced DOE model (removing non-significant terms)
-    print("Step 15: Fitting Reduced Design of Experiments model...")
+    # Step 14: Fit reduced DOE model (removing non-significant terms)
+    print("Step 14: Fitting Reduced Design of Experiments model...")
     reduced_model, reduced_results, reduced_summary_stats = fit_reduced_doe_model(doe_df, results)
     print("✓ Reduced DOE model fit completed\n")
     
-    # Step 16: Convert HTML reports to PDF
-    print("Step 16: Converting HTML reports to PDF...")
+    # Step 15: Convert HTML reports to PDF
+    print("Step 15: Converting HTML reports to PDF...")
     pdf_status = convert_html_to_pdf()
     print("✓ HTML to PDF conversion completed\n")
     
-    # Step 17: Convert HTML reports to PowerPoint
-    print("Step 17: Converting HTML reports to PowerPoint...")
+    # Step 16: Convert HTML reports to PowerPoint
+    print("Step 16: Converting HTML reports to PowerPoint...")
     pptx_status = convert_html_to_powerpoint()
     print("✓ HTML to PowerPoint conversion completed\n")
     
