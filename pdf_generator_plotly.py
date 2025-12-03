@@ -328,7 +328,7 @@ def create_reduced_model_pdf_enhanced(pdf_path, html_file_path):
                     story.append(rl_image)
                     story.append(Spacer(1, 0.2*inch))
             except Exception as e:
-                pass
+                print(f"      Warning: Could not add interaction plot '{title}': {str(e)[:100]}")
         
         story.append(PageBreak())
     
@@ -711,19 +711,27 @@ def extract_coefficients_from_html(html_file_path, top_n=50):
         return None
 
 
-def extract_interaction_plots_from_html_for_pdf(html_path, output_dir='/tmp'):
+def extract_interaction_plots_from_html_for_pdf(html_path, output_dir=None):
     """
     Extract interaction plots from HTML and convert to PNG images for PDF embedding.
     
     Args:
         html_path (str): Path to the HTML report
-        output_dir (str): Directory to save PNG images
+        output_dir (str): Directory to save PNG images (defaults to outputs/ subdirectory)
         
     Returns:
         list: List of tuples (title, image_path) for each interaction plot
     """
     import plotly.graph_objects as go
     import json
+    
+    # Use outputs/.temp/ for persistent storage if not specified
+    if output_dir is None:
+        output_dir = Path('outputs/.temp')
+        output_dir.mkdir(exist_ok=True)
+    else:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
     
     try:
         with open(html_path, 'r', encoding='utf-8') as f:
@@ -804,7 +812,7 @@ def extract_interaction_plots_from_html_for_pdf(html_path, output_dir='/tmp'):
                 fig = go.Figure(data=data, layout=layout)
                 
                 # Convert to image
-                img_path = f"{output_dir}/interaction_plot_{len(plots)}.png"
+                img_path = str(Path(output_dir) / f"interaction_plot_{len(plots)}.png")
                 fig.write_image(img_path, width=900, height=600, scale=2)
                 
                 plots.append((title, img_path))
