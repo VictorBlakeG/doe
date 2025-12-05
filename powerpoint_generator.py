@@ -1125,21 +1125,9 @@ Verdict: Successful model reduction with maintained prediction accuracy
         create_content_slide(prs, "Full Model Analysis", "text", 
                            "Detailed analysis of the full 820-parameter model")
         
-        for idx, image_io in enumerate(full_images[:10]):
-            slide = create_content_slide(prs, f"Full Model - Chart {idx + 1}", "image", image_io)
-        
         # Add reduced model section
         create_content_slide(prs, "Reduced Model Analysis", "text", 
                            "Streamlined analysis of the 451-parameter reduced model")
-        
-        for idx, image_io in enumerate(reduced_images[:10]):
-            slide = create_content_slide(prs, f"Reduced Model - Chart {idx + 1}", "image", image_io)
-        
-        # Add side-by-side leverage comparisons if requested
-        if include_side_by_side_leverage:
-            create_content_slide(prs, "Leverage Plot Comparisons", "text",
-                               "Side-by-side comparison of leverage plots from full and reduced models")
-            add_side_by_side_leverage_comparisons(prs, full_html, reduced_html)
         
         # Save presentation
         prs.save(output_path)

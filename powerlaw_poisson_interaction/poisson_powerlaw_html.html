@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poisson-Power Law Interaction Model</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-indigo-50 min-h-screen p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">
+                Poisson-Power Law Interaction Model
+            </h1>
+            <p class="text-slate-600 mb-4">
+                Exploring how a power law variable modulates a Poisson process
+            </p>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                <p class="font-mono text-sm">
+                    <strong>Model:</strong> λ(Y) = λ₀ × (Y/y_min)^β
+                </p>
+                <p class="font-mono text-sm">
+                    <strong>Joint:</strong> P(X,Y) = Poisson(X|λ(Y)) × PowerLaw(Y|α,y_min)
+                </p>
+            </div>
+
+            <!-- Controls -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        λ₀ (base rate): <span id="lambda0-value">5</span>
+                    </label>
+                    <input type="range" id="lambda0" min="1" max="20" step="1" value="5" 
+                           class="w-full" onchange="updateAll()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        β (scaling exp): <span id="beta-value">0.30</span>
+                    </label>
+                    <input type="range" id="beta" min="0" max="1" step="0.05" value="0.3" 
+                           class="w-full" onchange="updateAll()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        α (tail exp): <span id="alpha-value">2.50</span>
+                    </label>
+                    <input type="range" id="alpha" min="1.5" max="4" step="0.1" value="2.5" 
+                           class="w-full" onchange="updateAll()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        y_min: <span id="ymin-value">100</span>
+                    </label>
+                    <input type="range" id="ymin" min="10" max="500" step="10" value="100" 
+                           class="w-full" onchange="updateAll()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Power Law Distribution -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-slate-800 mb-4">
+                    Power Law Distribution (Factor Y)
+                </h2>
+                <div class="chart-container">
+                    <canvas id="powerLawChart"></canvas>
+                </div>
+                <p class="text-sm text-slate-600 mt-2">
+                    P(Y) = (α-1)/y_min × (Y/y_min)^(-α)
+                </p>
+            </div>
+
+            <!-- Lambda Function -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-slate-800 mb-4">
+                    Poisson Rate as Function of Y
+                </h2>
+                <div class="chart-container">
+                    <canvas id="lambdaChart"></canvas>
+                </div>
+                <p class="text-sm text-slate-600 mt-2">
+                    λ(Y) = λ₀ × (Y/y_min)^β
+                </p>
+            </div>
+        </div>
+
+        <!-- Poisson Distributions -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">
+                Conditional Poisson Distributions P(X|Y)
+            </h2>
+            <div class="chart-container">
+                <canvas id="poissonChart"></canvas>
+            </div>
+            <p class="text-sm text-slate-600 mt-2">
+                As Y increases, the Poisson distribution shifts right (higher mean) and spreads out
+            </p>
+        </div>
+
+        <!-- Joint Distribution -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">
+                Joint Distribution Samples P(X,Y)
+            </h2>
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="jointChart"></canvas>
+            </div>
+            <p class="text-sm text-slate-600 mt-2">
+                Each point: (X, Y) sampled from joint distribution. Notice positive correlation due to λ(Y).
+            </p>
+        </div>
+
+        <!-- Example Calculations -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">
+                Example Calculations
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="border-l-4 border-blue-500 pl-4">
+                    <h3 class="font-semibold text-lg mb-2">Example 1: <span id="ex1-y"></span></h3>
+                    <div class="space-y-1 text-sm font-mono" id="example1-content"></div>
+                </div>
+
+                <div class="border-l-4 border-red-500 pl-4">
+                    <h3 class="font-semibold text-lg mb-2">Example 2: <span id="ex2-y"></span></h3>
+                    <div class="space-y-1 text-sm font-mono" id="example2-content"></div>
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-slate-50 rounded">
+                <h4 class="font-semibold mb-2">Key Insight:</h4>
+                <p class="text-sm text-slate-700" id="key-insight"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global chart instances
+        let powerLawChart, lambdaChart, poissonChart, jointChart;
+
+        // Mathematical functions
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) result *= i;
+            return result;
+        }
+
+        function poissonPMF(k, lambda) {
+            if (lambda > 170) {
+                // Use normal approximation for large lambda
+                const mean = lambda;
+                const std = Math.sqrt(lambda);
+                const z = (k - mean) / std;
+                return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * z * z);
+            }
+            let logProb = k * Math.log(lambda) - lambda;
+            for (let i = 1; i <= k; i++) {
+                logProb -= Math.log(i);
+            }
+            return Math.exp(logProb);
+        }
+
+        function powerLawPDF(y, alpha, yMin) {
+            if (y < yMin) return 0;
+            return (alpha - 1) / yMin * Math.pow(y / yMin, -alpha);
+        }
+
+        function lambdaFunction(y, lambda0, beta, yMin) {
+            return lambda0 * Math.pow(y / yMin, beta);
+        }
+
+        // Generate samples from power law (inverse transform sampling)
+        function samplePowerLaw(alpha, yMin, yMax) {
+            const u = Math.random();
+            const y = yMin * Math.pow(1 - u, -1 / (alpha - 1));
+            return y > yMax ? yMax : y;
+        }
+
+        // Sample from Poisson distribution
+        function samplePoisson(lambda) {
+            if (lambda > 50) {
+                // Normal approximation
+                let u1 = Math.random();
+                let u2 = Math.random();
+                let z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                return Math.max(0, Math.round(lambda + Math.sqrt(lambda) * z));
+            }
+            
+            const L = Math.exp(-lambda);
+            let p = 1;
+            let k = 0;
+            do {
+                k++;
+                p *= Math.random();
+            } while (p > L && k < 1000);
+            return k - 1;
+        }
+
+        function getParameters() {
+            return {
+                lambda0: parseFloat(document.getElementById('lambda0').value),
+                beta: parseFloat(document.getElementById('beta').value),
+                alpha: parseFloat(document.getElementById('alpha').value),
+                yMin: parseFloat(document.getElementById('ymin').value)
+            };
+        }
+
+        function updateValueDisplays() {
+            const params = getParameters();
+            document.getElementById('lambda0-value').textContent = params.lambda0;
+            document.getElementById('beta-value').textContent = params.beta.toFixed(2);
+            document.getElementById('alpha-value').textContent = params.alpha.toFixed(2);
+            document.getElementById('ymin-value').textContent = params.yMin;
+        }
+
+        function createPowerLawChart() {
+            const params = getParameters();
+            const data = [];
+            const yMax = params.yMin * 50;
+            
+            for (let y = params.yMin; y <= yMax; y += params.yMin * 0.5) {
+                data.push({
+                    x: y,
+                    y: powerLawPDF(y, params.alpha, params.yMin)
+                });
+            }
+
+            if (powerLawChart) powerLawChart.destroy();
+            
+            const ctx = document.getElementById('powerLawChart').getContext('2d');
+            powerLawChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'P(Y)',
+                        data: data,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: { display: true, text: 'Y (log scale)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'P(Y)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createLambdaChart() {
+            const params = getParameters();
+            const data = [];
+            const yMax = params.yMin * 50;
+            
+            for (let y = params.yMin; y <= yMax; y += params.yMin * 0.5) {
+                data.push({
+                    x: y,
+                    y: lambdaFunction(y, params.lambda0, params.beta, params.yMin)
+                });
+            }
+
+            if (lambdaChart) lambdaChart.destroy();
+            
+            const ctx = document.getElementById('lambdaChart').getContext('2d');
+            lambdaChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'λ(Y)',
+                        data: data,
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Y' }
+                        },
+                        y: {
+                            title: { display: true, text: 'λ(Y)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createPoissonChart() {
+            const params = getParameters();
+            const yValues = [params.yMin, params.yMin * 5, params.yMin * 20];
+            const datasets = [];
+            const colors = ['#3b82f6', '#f59e0b', '#ef4444'];
+            
+            yValues.forEach((y, idx) => {
+                const lambda = lambdaFunction(y, params.lambda0, params.beta, params.yMin);
+                const data = [];
+                const maxK = Math.min(50, Math.ceil(lambda + 4 * Math.sqrt(lambda)));
+                
+                for (let k = 0; k <= maxK; k++) {
+                    data.push({
+                        x: k,
+                        y: poissonPMF(k, lambda)
+                    });
+                }
+                
+                datasets.push({
+                    label: `Y = ${y}`,
+                    data: data,
+                    borderColor: colors[idx],
+                    tension: 0.4,
+                    fill: false
+                });
+            });
+
+            if (poissonChart) poissonChart.destroy();
+            
+            const ctx = document.getElementById('poissonChart').getContext('2d');
+            poissonChart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'X (count)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'P(X|Y)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createJointChart() {
+            const params = getParameters();
+            const samples = [];
+            const yMax = params.yMin * 100;
+            
+            for (let i = 0; i < 300; i++) {
+                const y = samplePowerLaw(params.alpha, params.yMin, yMax);
+                const lambda = lambdaFunction(y, params.lambda0, params.beta, params.yMin);
+                const x = samplePoisson(lambda);
+                samples.push({ x: x, y: y });
+            }
+
+            if (jointChart) jointChart.destroy();
+            
+            const ctx = document.getElementById('jointChart').getContext('2d');
+            jointChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Joint Samples',
+                        data: samples,
+                        backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'X (Poisson count)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Y (power law factor)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateExamples() {
+            const params = getParameters();
+            const ex1Y = params.yMin * 10;
+            const ex2Y = params.yMin * 50;
+            
+            const lambda1 = lambdaFunction(ex1Y, params.lambda0, params.beta, params.yMin);
+            const lambda2 = lambdaFunction(ex2Y, params.lambda0, params.beta, params.yMin);
+            
+            const prob1 = powerLawPDF(ex1Y, params.alpha, params.yMin);
+            const prob2 = powerLawPDF(ex2Y, params.alpha, params.yMin);
+            
+            document.getElementById('ex1-y').textContent = `Y = ${ex1Y}`;
+            document.getElementById('example1-content').innerHTML = `
+                <p>λ(Y) = ${params.lambda0} × (${ex1Y}/${params.yMin})^${params.beta.toFixed(2)}</p>
+                <p class="text-blue-600 font-bold">λ = ${lambda1.toFixed(2)}</p>
+                <p>E[X|Y] = ${lambda1.toFixed(2)}</p>
+                <p>Var[X|Y] = ${lambda1.toFixed(2)}</p>
+                <p class="text-purple-600 mt-2">P(Y) = ${prob1.toExponential(3)}</p>
+            `;
+            
+            document.getElementById('ex2-y').textContent = `Y = ${ex2Y}`;
+            document.getElementById('example2-content').innerHTML = `
+                <p>λ(Y) = ${params.lambda0} × (${ex2Y}/${params.yMin})^${params.beta.toFixed(2)}</p>
+                <p class="text-red-600 font-bold">λ = ${lambda2.toFixed(2)}</p>
+                <p>E[X|Y] = ${lambda2.toFixed(2)}</p>
+                <p>Var[X|Y] = ${lambda2.toFixed(2)}</p>
+                <p class="text-purple-600 mt-2">P(Y) = ${prob2.toExponential(3)}</p>
+            `;
+            
+            const yRatio = (ex2Y / ex1Y).toFixed(1);
+            const lambdaRatio = (lambda2 / lambda1).toFixed(2);
+            const probRatio = (prob1 / prob2).toFixed(1);
+            
+            document.getElementById('key-insight').textContent = 
+                `As Y increases by ${yRatio}×, the expected count E[X|Y] increases by ${lambdaRatio}×, but the probability P(Y) decreases by ${probRatio}×. This creates a heavy-tailed count distribution with rare but extreme events.`;
+        }
+
+        function updateAll() {
+            updateValueDisplays();
+            createPowerLawChart();
+            createLambdaChart();
+            createPoissonChart();
+            createJointChart();
+            updateExamples();
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            updateAll();
+        });
+    </script>
+</body>
+</html>

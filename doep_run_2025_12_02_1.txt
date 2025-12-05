@@ -1,0 +1,1416 @@
+Script started on Tue Dec  2 22:42:27 2025
+[1m[7m%[27m[1m[0m                                                                                ]7;file://pool-71-124-36-208.clppva.fios.verizon.net/Users/vblake/doe2[0m[27m[24m[Jvblake@pool-71-124-36-208 doe2 % [K[?2004hppython3 doep.py[?2004l
+
+Starting data processing pipeline...
+
+Step 1: Loading CSV data...
+✓ CSV data loaded successfully
+
+Step 2: Displaying data summary...
+
+================================================================================
+DATA SUMMARY
+================================================================================
+
+Total rows imported: 16318
+Total columns: 9
+
+Column names:
+  1. Interface_Temp
+  2. Fan_FanTray1Fan1Sensor1
+  3. Fan_FanTray2Fan1Sensor1
+  4. Fan_FanTray3Fan1Sensor1
+  5. Fan_FanTray4Fan1Sensor1
+  6. rack_unit
+  7. Device_local_sn
+  8. SFP_manufacturer
+  9. SFP_model
+
+--------------------------------------------------------------------------------
+HEAD (First 5 rows):
+--------------------------------------------------------------------------------
+   Interface_Temp  Fan_FanTray1Fan1Sensor1  ...  SFP_manufacturer         SFP_model
+0            71.5                     9090  ...               AOI  AQPLBCQ4EDMA1072
+1            70.9                     9316  ...               AOI  AQPLBCQ4EDMA1072
+2            70.7                     9900  ...               AOI  AQPLBCQ4EDMA1072
+3            70.5                     8571  ...               AOI  AQPLBCQ4EDMA1072
+4            70.4                     8571  ...               AOI  AQPLBCQ4EDMA1072
+
+[5 rows x 9 columns]
+
+--------------------------------------------------------------------------------
+TAIL (Last 5 rows):
+--------------------------------------------------------------------------------
+       Interface_Temp  ...         SFP_model
+16313           62.26  ...  FCBN425QF1C07-OR
+16314           62.23  ...  1AT-3Q4M10XX-14A
+16315           62.14  ...  1AT-3Q4M15XX-14A
+16316           62.06  ...  1AT-3Q4M10XX-14A
+16317           62.03  ...  FCBN425QF1C20-OR
+
+[5 rows x 9 columns]
+Step 3: Removing rows with missing data...
+
+================================================================================
+DATA CLEANING SUMMARY
+================================================================================
+Rows before cleaning: 16318
+Rows after cleaning:  16318
+Rows removed:         0
+================================================================================
+
+Starting dataframe has 16318 rows
+
+Step 4: Calculating fan speed mean...
+✓ Fan speed mean calculated and added to dataframe
+
+Step 5: Transceiver Manufacturer clean...
+
+================================================================================
+TRANSCEIVER MANUFACTURER DISTRIBUTION
+================================================================================
+
+Total unique transceiver manufacturers: 10
+
+Finisar                                    7216 rows ( 44.2%)
+AOI                                        5085 rows ( 31.2%)
+Intel Corp                                 1457 rows (  8.9%)
+Accelight                                  1423 rows (  8.7%)
+Hisense                                     473 rows (  2.9%)
+O-NET                                       342 rows (  2.1%)
+Eoptolink                                   283 rows (  1.7%)
+NON-JNPR                                     24 rows (  0.1%)
+Ligent Photonics                             10 rows (  0.1%)
+CENTERA                                       5 rows (  0.0%)
+
+================================================================================
+
+✓ Transceiver manufacturer analysis and consolidation completed
+
+Step 6: Generating fan speed mean histogram...
+✓ Histogram generated: outputs/fan_speed_mean.html
+
+Step 7: Splitting fan data by speed threshold...
+✓ Fan data split successfully
+
+================================================================================
+FAN SPEED DISTRIBUTION
+================================================================================
+Low speed fans (< 11999):    12,469 rows
+High speed fans (>= 12000):  3,848 rows
+Total:                       16,317 rows
+================================================================================
+
+Step 8: Exporting fan dataframes to CSV...
+✓ Low speed fan data exported: outputs/fan_low_df.csv
+✓ High speed fan data exported: outputs/fan_high_df.csv
+
+Step 9: Balancing dataframes to equal size...
+
+================================================================================
+DATAFRAME BALANCING
+================================================================================
+
+Initial row counts:
+  Low speed fans:   12,469 rows
+  High speed fans:  3,848 rows
+
+Minimum rows: 3,848
+Target rows (rounded to nearest 100): 3,800
+
+Final row counts after balancing:
+  Low speed fans:   3,800 rows
+  High speed fans:  3,800 rows
+  Total:            7,600 rows
+================================================================================
+
+✓ Dataframes balanced successfully
+
+Step 10: Generating comparative fan speed histograms...
+✓ Comparative histogram generated: outputs/fan_hl_histogram.html
+
+Step 11: Generating interface temperature comparative histograms...
+✓ Temperature histogram generated: outputs/ttemp_hl_histogram.html
+
+Step 12: Setting up Design of Experiments...
+
+================================================================================
+DESIGN OF EXPERIMENTS SETUP
+================================================================================
+
+Factor Levels:
+  Transceiver Manufacturer: 10 levels (categorical)
+    ['Finisar', 'Hisense', 'O-NET', 'AOI', 'Accelight']... (+5 more)
+  Fan Speed Range: 2 levels (categorical)
+    ['L', 'H']
+  Rack Unit: Continuous
+    Range: 1.0 to 42.0
+    Mean: 11.76
+
+Response Variable: Interface_Temp
+Total observations: 7600
+================================================================================
+
+✓ DOE design setup completed
+
+Step 13: Creating full-factorial design...
+
+================================================================================
+FULL FACTORIAL DESIGN TABLE
+================================================================================
+
+Design Factors (All Discrete/Categorical):
+  Transceiver Manufacturers: 10 levels
+  Rack Unit: 42 discrete levels (integer: 1-42)
+  Fan Speed Range: 2 levels (L, H)
+
+Total Design Runs: 840
+  (10 × 42 × 2)
+
+Design Runs (First 30):
+ Run Transceiver_Manufacturer  Rack_Unit Fan_Speed_Range
+   1                      AOI          1               L
+   2                      AOI          1               H
+   3                      AOI          2               L
+   4                      AOI          2               H
+   5                      AOI          3               L
+   6                      AOI          3               H
+   7                      AOI          4               L
+   8                      AOI          4               H
+   9                      AOI          5               L
+  10                      AOI          5               H
+  11                      AOI          6               L
+  12                      AOI          6               H
+  13                      AOI          7               L
+  14                      AOI          7               H
+  15                      AOI          8               L
+  16                      AOI          8               H
+  17                      AOI          9               L
+  18                      AOI          9               H
+  19                      AOI         10               L
+  20                      AOI         10               H
+  21                      AOI         11               L
+  22                      AOI         11               H
+  23                      AOI         12               L
+  24                      AOI         12               H
+  25                      AOI         13               L
+  26                      AOI         13               H
+  27                      AOI         14               L
+  28                      AOI         14               H
+  29                      AOI         15               L
+  30                      AOI         15               H
+
+... (810 more runs)
+================================================================================
+
+Design table saved to: outputs/doe_design.html
+
+✓ Full-factorial design created
+
+Step 14: Fitting Design of Experiments model...
+
+Duplicate Observations Analysis:
+  Total observations: 7600
+  Factor combinations with replicates: 7566
+  Pure Error df: 7382
+  Pure Error SS: 12869.7457
+
+================================================================================
+DESIGN OF EXPERIMENTS MODEL FIT RESULTS
+================================================================================
+
+Model Summary:
+  R-squared: 0.3897
+  Adjusted R-squared: 0.3718
+  F-statistic: 21.7214
+  Prob (F-statistic): 0.000000
+  Residual Std Error: 1.3205
+  Degrees of Freedom: 7382.0
+
+ANOVA Table (Type I - Sequential):
+                                                                 df        sum_sq     mean_sq           F         PR(>F)
+C(Transceiver_Manufacturer)                                     9.0   3416.867951  379.651995  217.728101   0.000000e+00
+C(Rack_Unit)                                                   40.0    420.470350   10.511759    6.028429   5.805970e-30
+C(Fan_Speed_Range)                                              1.0      1.650636    1.650636    0.946630   3.306106e-01
+C(Transceiver_Manufacturer):C(Rack_Unit)                      360.0   4773.002669   13.258341    7.603577  1.506162e-294
+C(Transceiver_Manufacturer):C(Fan_Speed_Range)                  9.0     49.582416    5.509157    3.159468   8.194519e-04
+C(Rack_Unit):C(Fan_Speed_Range)                                40.0     81.517142    2.037929    1.168740   2.157059e-01
+C(Transceiver_Manufacturer):C(Rack_Unit):C(Fan_Speed_Range)   360.0    744.721848    2.068672    1.186371   1.015344e-02
+Residual                                                     7382.0  12871.976623    1.743698         NaN            NaN
+
+================================================================================
+LACK-OF-FIT TEST (Using Duplicate Observations)
+================================================================================
+        Source      df        sum_sq   mean_sq    F  PR(>F)
+0  Lack of Fit     0.0      2.230970  0.000000  0.0     1.0
+1   Pure Error  7382.0  12869.745653  1.743396  NaN     NaN
+2  Total Error  7382.0  12871.976623  1.743698  NaN     NaN
+
+================================================================================
+PARAMETER ESTIMATES (95% Confidence Interval)
+================================================================================
+                                                                                             Coefficient     Std Error     t-value       p-value      Lower CI      Upper CI
+Intercept                                                                                   6.508726e+01  8.009166e-02  812.659663  0.000000e+00  6.493026e+01  6.524426e+01
+C(Transceiver_Manufacturer)[T.Accelight]                                                   -1.327588e+00  1.334055e-01   -9.951526  3.474620e-23 -1.589101e+00 -1.066075e+00
+C(Transceiver_Manufacturer)[T.CENTERA]                                                     -2.865921e+00  1.330717e+00   -2.153667  3.129858e-02 -5.474507e+00 -2.573361e-01
+C(Transceiver_Manufacturer)[T.Eoptolink]                                                    9.956036e+11  5.616311e+12    0.177270  8.593012e-01 -1.001397e+13  1.200518e+13
+C(Transceiver_Manufacturer)[T.Finisar]                                                     -1.332634e+00  1.171946e-01  -11.371124  1.028002e-29 -1.562369e+00 -1.102899e+00
+C(Transceiver_Manufacturer)[T.Hisense]                                                     -1.723358e+00  4.061956e-01   -4.242680  2.235663e-05 -2.519617e+00 -9.270987e-01
+C(Transceiver_Manufacturer)[T.Intel Corp]                                                  -8.904329e+10  2.251044e+11   -0.395564  6.924378e-01 -5.303121e+11  3.522255e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]                                            -2.250370e+11  5.680593e+11   -0.396151  6.920054e-01 -1.338595e+12  8.885214e+11
+C(Transceiver_Manufacturer)[T.NON-JNPR]                                                    -2.830278e+00  4.736028e-01   -5.976058  2.392290e-09 -3.758675e+00 -1.901881e+00
+C(Transceiver_Manufacturer)[T.O-NET]                                                       -2.493208e+00  5.449980e-01   -4.574710  4.846671e-06 -3.561559e+00 -1.424856e+00
+C(Rack_Unit)[T.2]                                                                          -9.169643e-02  1.437979e-01   -0.637676  5.237045e-01 -3.735813e-01  1.901884e-01
+C(Rack_Unit)[T.3]                                                                          -3.181907e-01  1.595087e-01   -1.994817  4.609955e-02 -6.308734e-01 -5.508082e-03
+C(Rack_Unit)[T.4]                                                                          -5.594260e-01  1.760749e-01   -3.177204  1.493151e-03 -9.045831e-01 -2.142689e-01
+C(Rack_Unit)[T.5]                                                                          -4.073743e-01  1.969668e-01   -2.068238  3.865236e-02 -7.934854e-01 -2.126316e-02
+C(Rack_Unit)[T.6]                                                                          -1.245049e+00  2.667196e-01   -4.668008  3.095022e-06 -1.767896e+00 -7.222027e-01
+C(Rack_Unit)[T.7]                                                                          -8.034105e-01  2.374523e-01   -3.383461  7.195089e-04 -1.268885e+00 -3.379362e-01
+C(Rack_Unit)[T.8]                                                                          -7.261286e-01  3.134979e-01   -2.316215  2.057378e-02 -1.340674e+00 -1.115832e-01
+C(Rack_Unit)[T.9]                                                                          -2.531631e+10  6.204383e+10   -0.408039  6.832568e-01 -1.469399e+11  9.630731e+10
+C(Rack_Unit)[T.10]                                                                         -1.573939e+11  3.911970e+11   -0.402339  6.874461e-01 -9.242516e+11  6.094639e+11
+C(Rack_Unit)[T.11]                                                                         -1.226130e+10  3.219538e+10   -0.380840  7.033326e-01 -7.537343e+10  5.085083e+10
+C(Rack_Unit)[T.12]                                                                          3.910803e+10  9.786822e+10    0.399599  6.894635e-01 -1.527416e+11  2.309577e+11
+C(Rack_Unit)[T.13]                                                                         -4.260021e+10  1.096348e+11   -0.388565  6.976095e-01 -2.575158e+11  1.723154e+11
+C(Rack_Unit)[T.14]                                                                          4.754212e+10  1.214984e+11    0.391298  6.955881e-01 -1.906295e+11  2.857137e+11
+C(Rack_Unit)[T.15]                                                                         -2.589378e+00  1.322960e+00   -1.957260  5.035449e-02 -5.182757e+00  4.001989e-03
+C(Rack_Unit)[T.16]                                                                          1.306003e+11  3.309599e+11    0.394611  6.931417e-01 -5.181756e+11  7.793761e+11
+C(Rack_Unit)[T.17]                                                                         -2.391941e+00  1.323005e+00   -1.807961  7.065321e-02 -4.985408e+00  2.015255e-01
+C(Rack_Unit)[T.18]                                                                         -2.223810e+10  5.595354e+10   -0.397439  6.910554e-01 -1.319230e+11  8.744680e+10
+C(Rack_Unit)[T.19]                                                                          2.051834e+10  5.001332e+10    0.410258  6.816290e-01 -7.752204e+10  1.185587e+11
+C(Rack_Unit)[T.20]                                                                          1.140970e+10  2.985368e+10    0.382187  7.023333e-01 -4.711203e+10  6.993143e+10
+C(Rack_Unit)[T.21]                                                                          1.702734e+10  4.326106e+10    0.393595  6.938914e-01 -6.777669e+10  1.018314e+11
+C(Rack_Unit)[T.22]                                                                         -5.277787e+10  1.325627e+11   -0.398135  6.905420e-01 -3.126385e+11  2.070828e+11
+C(Rack_Unit)[T.23]                                                                         -2.216127e+00  6.653110e-01   -3.330965  8.697034e-04 -3.520327e+00 -9.119281e-01
+C(Rack_Unit)[T.24]                                                                         -2.493841e+00  7.668768e-01   -3.251945  1.151330e-03 -3.997139e+00 -9.905438e-01
+C(Rack_Unit)[T.25]                                                                         -1.389647e+00  9.372334e-01   -1.482712  1.381935e-01 -3.226892e+00  4.475974e-01
+C(Rack_Unit)[T.26]                                                                         -1.596277e+00  1.323196e+00   -1.206380  2.277096e-01 -4.190118e+00  9.975643e-01
+C(Rack_Unit)[T.27]                                                                          5.046715e+11  1.126938e+12    0.447826  6.542923e-01 -1.704448e+12  2.713791e+12
+C(Rack_Unit)[T.28]                                                                          6.085607e-01  1.323037e+00    0.459972  6.455496e-01 -1.984970e+00  3.202091e+00
+C(Rack_Unit)[T.29]                                                                         -7.459872e+11  2.280284e+12   -0.327147  7.435663e-01 -5.215995e+12  3.724021e+12
+C(Rack_Unit)[T.30]                                                                         -2.316164e+00  7.665461e-01   -3.021559  2.523381e-03 -3.818814e+00 -8.135154e-01
+C(Rack_Unit)[T.31]                                                                          6.077311e+10  1.377132e+11    0.441302  6.590073e-01 -2.091841e+11  3.307303e+11
+C(Rack_Unit)[T.32]                                                                         -2.932981e+10  6.481962e+10   -0.452483  6.509340e-01 -1.563948e+11  9.773515e+10
+C(Rack_Unit)[T.33]                                                                         -1.270285e+11  3.576692e+11   -0.355156  7.224826e-01 -8.281621e+11  5.741052e+11
+C(Rack_Unit)[T.34]                                                                          2.395087e+10  5.130069e+10    0.466872  6.406051e-01 -7.661313e+10  1.245149e+11
+C(Rack_Unit)[T.36]                                                                         -9.345179e+10  2.713381e+11   -0.344411  7.305471e-01 -6.253519e+11  4.384483e+11
+C(Rack_Unit)[T.37]                                                                         -1.533567e+11  3.805150e+11   -0.403024  6.869423e-01 -8.992747e+11  5.925614e+11
+C(Rack_Unit)[T.38]                                                                         -7.164382e+11  1.763432e+12   -0.406275  6.845524e-01 -4.173269e+12  2.740392e+12
+C(Rack_Unit)[T.39]                                                                         -2.396748e+10  4.417093e+10   -0.542607  5.874165e-01 -1.105551e+11  6.262016e+10
+C(Rack_Unit)[T.40]                                                                          7.747837e+10  1.883836e+11    0.411280  6.808793e-01 -2.918073e+11  4.467641e+11
+C(Rack_Unit)[T.41]                                                                          1.775210e+11  4.109840e+11    0.431941  6.657967e-01 -6.281250e+11  9.831670e+11
+C(Rack_Unit)[T.42]                                                                         -1.052773e+11  2.698902e+11   -0.390075  6.964927e-01 -6.343390e+11  4.237845e+11
+C(Fan_Speed_Range)[T.L]                                                                     3.093134e-01  1.519605e-01    2.035486  4.183766e-02  1.142749e-02  6.071993e-01
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.2]                                  5.584868e-02  2.451631e-01    0.227802  8.198064e-01 -4.247409e-01  5.364383e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.2]                                    6.846998e+09  1.579075e+10    0.433608  6.645856e-01 -2.410737e+10  3.780137e+10
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.2]                                  2.392705e+11  6.841302e+11    0.349744  7.265407e-01 -1.101820e+12  1.580361e+12
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.2]                                   -2.853131e-02  2.044872e-01   -0.139526  8.890382e-01 -4.293846e-01  3.723220e-01
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.2]                                   -8.724436e-01  7.265723e-01   -1.200766  2.298803e-01 -2.296733e+00  5.518454e-01
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.2]                                 8.904329e+10  2.251044e+11    0.395564  6.924378e-01 -3.522255e+11  5.303121e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.2]                           2.901564e+09  8.888208e+09    0.326451  7.440924e-01 -1.452186e+10  2.032499e+10
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.2]                                  -1.655059e-01  1.053723e+00   -0.157068  8.751958e-01 -2.231104e+00  1.900092e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.2]                                     -9.586926e+10  2.055718e+11   -0.466354  6.409759e-01 -4.988487e+11  3.071102e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.3]                                 -2.909585e-01  2.556065e-01   -1.138306  2.550295e-01 -7.920202e-01  2.101032e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.3]                                   -1.112674e+10  2.800406e+10   -0.397326  6.911387e-01 -6.602268e+10  4.376921e+10
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.3]                                 -1.453141e+11  3.798501e+11   -0.382556  7.020597e-01 -8.899287e+11  5.993005e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.3]                                    1.821582e-01  2.258085e-01    0.806693  4.198692e-01 -2.604909e-01  6.248073e-01
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.3]                                   -3.829665e-02  1.388587e+00   -0.027580  9.779982e-01 -2.760324e+00  2.683731e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.3]                                 8.904329e+10  2.251044e+11    0.395564  6.924378e-01 -3.522255e+11  5.303121e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.3]                           6.625086e+09  1.657371e+10    0.399735  6.893635e-01 -2.586411e+10  3.911429e+10
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.3]                                  -7.451281e+09  1.982856e+10   -0.375785  7.070872e-01 -4.632091e+10  3.141835e+10
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.3]                                     -9.524142e+09  2.345502e+10   -0.406060  6.847103e-01 -5.550267e+10  3.645438e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.4]                                  4.251555e-01  2.991336e-01    1.421290  1.552747e-01 -1.612317e-01  1.011543e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.4]                                    1.435884e+09  3.598467e+09    0.399027  6.898852e-01 -5.618138e+09  8.489906e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.4]                                 -5.210016e+10  1.335469e+11   -0.390126  6.964544e-01 -3.138902e+11  2.096898e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.4]                                    4.042767e-01  2.567414e-01    1.574646  1.153811e-01 -9.900967e-02  9.075631e-01
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.4]                                    1.953160e-01  8.779270e-01    0.222474  8.239510e-01 -1.525671e+00  1.916303e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.4]                                 8.904329e+10  2.251044e+11    0.395564  6.924378e-01 -3.522255e+11  5.303121e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.4]                           1.385194e+09  2.365691e+09    0.585535  5.582061e-01 -3.252235e+09  6.022623e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.4]                                   7.606135e+07  1.354964e+09    0.056135  9.552355e-01 -2.580056e+09  2.732178e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.4]                                     -6.314471e+10  1.953530e+11   -0.323234  7.465273e-01 -4.460924e+11  3.198030e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.5]                                 -4.343025e-02  3.705390e-01   -0.117208  9.066982e-01 -7.697924e-01  6.829319e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.5]                                   -1.589881e+09  3.051283e+09   -0.521053  6.023452e-01 -7.571266e+09  4.391504e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.5]                                 -7.049600e+10  1.759218e+11   -0.400724  6.886352e-01 -4.153529e+11  2.743609e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.5]                                    9.466722e-02  2.896757e-01    0.326804  7.438253e-01 -4.731797e-01  6.625142e-01
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.5]                                   -4.578385e-01  1.033959e+00   -0.442802  6.579222e-01 -2.484692e+00  1.569015e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.5]                                 8.904329e+10  2.251044e+11    0.395564  6.924378e-01 -3.522255e+11  5.303121e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.5]                           4.591868e+08  3.041844e+09    0.150957  8.800140e-01 -5.503695e+09  6.422069e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.5]                                   6.514938e+01  1.414312e+00   46.064356  0.000000e+00  6.237692e+01  6.792183e+01
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.5]                                      7.905235e+09  2.011145e+10    0.393071  6.942781e-01 -3.151894e+10  4.732941e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.6]                                  7.154128e-01  3.723371e-01    1.921411  5.471834e-02 -1.447428e-02  1.445300e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.6]                                    1.086526e+09  3.386339e+09    0.320856  7.483289e-01 -5.551665e+09  7.724717e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.6]                                  1.271397e+11  3.224922e+11    0.394241  6.934145e-01 -5.050371e+11  7.593164e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.6]                                    6.371111e-01  3.316310e-01    1.921145  5.475194e-02 -1.298028e-02  1.287202e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.6]                                    8.804036e-01  1.404726e+00    0.626744  5.308464e-01 -1.873260e+00  3.634067e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.6]                                 8.904329e+10  2.251044e+11    0.395564  6.924378e-01 -3.522255e+11  5.303121e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.6]                          -5.656567e+08  1.802662e+09   -0.313790  7.536897e-01 -4.099389e+09  2.968075e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.6]                                  -4.936259e+08  4.456484e+09   -0.110766  9.118051e-01 -9.229606e+09  8.242354e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.6]                                     -1.418095e+11  3.476147e+11   -0.407950  6.833220e-01 -8.232335e+11  5.396145e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.7]                                  2.901127e-01  3.470885e-01    0.835847  4.032683e-01 -3.902798e-01  9.705053e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.7]                                   -6.578422e+08  3.757642e+09   -0.175068  8.610312e-01 -8.023894e+09  6.708209e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.7]                                 -7.899341e+10  1.986346e+11   -0.397682  6.908761e-01 -4.683740e+11  3.103871e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.7]                                    5.222682e-01  3.226109e-01    1.618880  1.055159e-01 -1.101412e-01  1.154678e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.7]                                    4.439999e+00  1.399480e+00    3.172606  1.516968e-03  1.696618e+00  7.183379e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.7]                                -4.732969e+10  1.181139e+11   -0.400712  6.886436e-01 -2.788667e+11  1.842073e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.7]                          -2.425001e+07  9.413296e+08   -0.025761  9.794483e-01 -1.869525e+09  1.821025e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.7]                                  -2.395162e+08  1.087545e+09   -0.220236  8.256937e-01 -2.371415e+09  1.892382e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.7]                                      6.140849e+10  1.538965e+11    0.399025  6.898866e-01 -2.402725e+11  3.630895e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.8]                                  3.514264e-01  4.305611e-01    0.816206  4.144089e-01 -4.925963e-01  1.195449e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.8]                                    1.100801e+08  1.043823e+09    0.105459  9.160148e-01 -1.936111e+09  2.156271e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.8]                                 -8.478956e+10  2.172398e+11   -0.390304  6.963231e-01 -5.106416e+11  3.410625e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.8]                                    5.683726e-01  4.095534e-01    1.387786  1.652440e-01 -2.344689e-01  1.371214e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.8]                                    4.952558e+08  2.968989e+09    0.166810  8.675245e-01 -5.324811e+09  6.315322e+09
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.8]                                 4.607675e+07  1.872262e+09    0.024610  9.803665e-01 -3.624091e+09  3.716244e+09
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.8]                           9.294379e+07  7.267968e+08    0.127881  8.982463e-01 -1.331785e+09  1.517673e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.8]                                   4.924442e+07  6.364302e+08    0.077376  9.383265e-01 -1.198340e+09  1.296829e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.8]                                      1.641986e+10  3.572180e+10    0.459659  6.457744e-01 -5.360508e+10  8.644479e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.9]                                 -1.613713e+08  1.439729e+09   -0.112084  9.107595e-01 -2.983652e+09  2.660909e+09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.9]                                    1.308659e+07  8.086347e+08    0.016184  9.870884e-01 -1.572068e+09  1.598241e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.9]                                  6.587821e+07  9.821009e+08    0.067079  9.465207e-01 -1.859320e+09  1.991076e+09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.9]                                    2.531631e+10  6.204383e+10    0.408039  6.832568e-01 -9.630731e+10  1.469399e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.9]                                   -3.862870e+08  1.794060e+09   -0.215314  8.295281e-01 -3.903156e+09  3.130582e+09
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.9]                                 1.143596e+11  2.870758e+11    0.398360  6.903761e-01 -4.483909e+11  6.771101e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.9]                           5.972102e+07  3.677651e+08    0.162389  8.710039e-01 -6.612035e+08  7.806455e+08
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.9]                                  -3.148659e+07  2.177542e+08   -0.144597  8.850331e-01 -4.583470e+08  3.953738e+08
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.9]                                      6.517739e+07  3.756029e+08    0.173527  8.622417e-01 -6.711115e+08  8.014662e+08
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.10]                                -9.650290e+07  9.705164e+08   -0.099435  9.207959e-01 -1.998992e+09  1.805986e+09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.10]                                   6.508741e+07  1.315831e+09    0.049465  9.605502e-01 -2.514317e+09  2.644492e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.10]                                 1.795895e+07  1.037818e+09    0.017305  9.861941e-01 -2.016460e+09  2.052378e+09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.10]                                   1.573939e+11  3.911970e+11    0.402339  6.874461e-01 -6.094639e+11  9.242516e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.10]                                  -1.699532e+08  1.047229e+09   -0.162288  8.710832e-01 -2.222821e+09  1.882915e+09
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.10]                                2.464372e+11  6.161033e+11    0.399993  6.891730e-01 -9.613010e+11  1.454175e+12
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.10]                         -1.761761e+07  6.405753e+08   -0.027503  9.780595e-01 -1.273328e+09  1.238093e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.10]                                 -2.773399e+08  1.633279e+09   -0.169806  8.651677e-01 -3.479033e+09  2.924353e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.10]                                     1.540873e+10  3.862894e+10    0.398891  6.899852e-01 -6.031502e+10  9.113247e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.11]                                -1.350078e+08  1.367982e+09   -0.098691  9.213861e-01 -2.816642e+09  2.546627e+09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.11]                                   1.408096e+08  7.768052e+08    0.181268  8.561625e-01 -1.381950e+09  1.663569e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.11]                                -2.124071e+07  4.488279e+08   -0.047325  9.622556e-01 -9.010714e+08  8.585900e+08
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.11]                                   5.663476e+09  1.524937e+10    0.371391  7.103571e-01 -2.422964e+10  3.555659e+10
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.11]                                  -1.034100e+08  7.395214e+08   -0.139834  8.887952e-01 -1.553083e+09  1.346263e+09
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.11]                                1.013046e+11  2.572679e+11    0.393771  6.937616e-01 -4.030138e+11  6.056230e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.11]                          1.277269e+08  9.834827e+08    0.129872  8.966712e-01 -1.800180e+09  2.055634e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.11]                                  7.623707e+07  6.904959e+08    0.110409  9.120879e-01 -1.277332e+09  1.429806e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.11]                                     1.833629e+10  4.469193e+10    0.410282  6.816110e-01 -6.927264e+10  1.059452e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.12]                                -1.627656e+08  8.954443e+08   -0.181771  8.557676e-01 -1.918092e+09  1.592561e+09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.12]                                  -8.389307e+06  4.854431e+07   -0.172818  8.627996e-01 -1.035500e+08  8.677139e+07
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.12]                                -1.139041e+08  7.383541e+08   -0.154268  8.774030e-01 -1.561289e+09  1.333481e+09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.12]                                  -2.086162e+10  5.141925e+10   -0.405716  6.849629e-01 -1.216580e+11  7.993478e+10
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.12]                                   8.192719e+07  5.315809e+08    0.154120  8.775194e-01 -9.601232e+08  1.123978e+09
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.12]                                4.993525e+10  1.274128e+11    0.391917  6.951309e-01 -1.998303e+11  2.997008e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.12]                         -1.148079e+08  7.346831e+08   -0.156269  8.758256e-01 -1.554996e+09  1.325381e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.12]                                  1.395360e+08  1.526755e+09    0.091394  9.271821e-01 -2.853340e+09  3.132412e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.12]                                    -1.609341e+08  1.517261e+09   -0.106069  9.155306e-01 -3.135199e+09  2.813331e+09
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.13]                                 1.422561e+08  1.107779e+09    0.128416  8.978236e-01 -2.029308e+09  2.313820e+09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.13]                                  -1.451627e+08  8.470321e+08   -0.171378  8.639312e-01 -1.805587e+09  1.515262e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.13]                                -5.916277e+07  3.967792e+08   -0.149108  8.814729e-01 -8.369633e+08  7.186378e+08
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.13]                                  -4.545764e+10  1.093495e+11   -0.415710  6.776347e-01 -2.598139e+11  1.688986e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.13]                                  -6.141510e+07  3.408109e+08   -0.180203  8.569982e-01 -7.295017e+08  6.066715e+08
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.13]                               -1.859302e+10  5.009457e+10   -0.371158  7.105302e-01 -1.167927e+11  7.960663e+10
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.13]                         -8.241172e+06  6.476612e+08   -0.012725  9.898479e-01 -1.277842e+09  1.261360e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.13]                                 -1.693049e+08  1.264464e+09   -0.133895  8.934895e-01 -2.648014e+09  2.309405e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.13]                                     1.029127e+08  5.906137e+08    0.174247  8.616761e-01 -1.054859e+09  1.260684e+09
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.14]                                 1.618262e+08  1.881914e+09    0.085990  9.314765e-01 -3.527262e+09  3.850914e+09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.14]                                  -3.935081e+06  7.240822e+08   -0.005435  9.956640e-01 -1.423343e+09  1.415473e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.14]                                 1.893329e+08  1.504631e+09    0.125833  8.998672e-01 -2.760173e+09  3.138838e+09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.14]                                  -4.754212e+10  1.214984e+11   -0.391298  6.955881e-01 -2.857137e+11  1.906295e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.14]                                  -1.975545e+07  5.094276e+08   -0.038780  9.690671e-01 -1.018379e+09  9.788680e+08
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.14]                                1.172454e+08  9.243555e+08    0.126840  8.990704e-01 -1.694755e+09  1.929246e+09
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.14]                          2.607572e+06  2.137904e+08    0.012197  9.902689e-01 -4.164826e+08  4.216978e+08
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.14]                                 -1.613128e+08  1.530988e+09   -0.105365  9.160889e-01 -3.162487e+09  2.839861e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.14]                                    -3.118656e+08  2.723657e+09   -0.114503  9.088426e-01 -5.651010e+09  5.027279e+09
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.15]                                 2.536925e+08  2.181230e+09    0.116307  9.074123e-01 -4.022140e+09  4.529525e+09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.15]                                   1.125492e+08  1.283444e+09    0.087693  9.301230e-01 -2.403367e+09  2.628465e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.15]                                -3.476867e+07  5.337968e+08   -0.065135  9.480685e-01 -1.081163e+09  1.011625e+09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.15]                                   1.915838e+00  1.389874e+00    1.378426  1.681137e-01 -8.087118e-01  4.640387e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.15]                                  -1.162173e+08  6.627163e+08   -0.175365  8.607976e-01 -1.415330e+09  1.182896e+09
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.15]                                8.904329e+10  2.251044e+11    0.395564  6.924378e-01 -3.522255e+11  5.303121e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.15]                          3.264480e+07  1.875623e+08    0.174048  8.618326e-01 -3.350307e+08  4.003204e+08
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.15]                                 -5.838610e+07  3.583829e+08   -0.162915  8.705895e-01 -7.609189e+08  6.441467e+08
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.15]                                     7.529825e+07  9.983313e+08    0.075424  9.398793e-01 -1.881716e+09  2.032313e+09
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.16]                                -5.728624e+07  3.395826e+08   -0.168696  8.660404e-01 -7.229651e+08  6.083927e+08
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.16]                                  -1.512905e+08  9.983734e+08   -0.151537  8.795562e-01 -2.108387e+09  1.805806e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.16]                                 7.056386e+06  1.098689e+08    0.064225  9.487924e-01 -2.083180e+08  2.224308e+08
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.16]                                  -4.683016e+10  1.170753e+11   -0.400000  6.891678e-01 -2.763311e+11  1.826708e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.16]                                   1.119342e+08  9.083008e+08    0.123235  9.019245e-01 -1.668595e+09  1.892463e+09
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.16]                                8.811378e+09  2.191567e+10    0.402058  6.876527e-01 -3.414959e+10  5.177234e+10
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.16]                         -2.459408e+08  1.586826e+09   -0.154989  8.768341e-01 -3.356573e+09  2.864691e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.16]                                 -7.070880e+07  1.040047e+09   -0.067986  9.457985e-01 -2.109497e+09  1.968079e+09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.16]                                     4.634393e+07  5.905516e+08    0.078476  9.374518e-01 -1.111306e+09  1.203994e+09
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.17]                                 8.905974e+07  9.252075e+08    0.096259  9.233173e-01 -1.724611e+09  1.902730e+09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.17]                                   1.013043e+07  1.223407e+08    0.082805  9.340088e-01 -2.296923e+08  2.499531e+08
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.17]                                 2.040566e+07  5.128178e+08    0.039791  9.682606e-01 -9.848635e+08  1.025675e+09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.17]                                   1.556912e+00  1.451251e+00    1.072807  2.833929e-01 -1.287954e+00  4.401778e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.17]                                   1.924076e+07  1.259603e+08    0.152753  8.785976e-01 -2.276774e+08  2.661589e+08
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.17]                                3.002328e+10  7.442803e+10    0.403387  6.866754e-01 -1.158769e+11  1.759235e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.17]                         -2.089575e+07  2.625195e+08   -0.079597  9.365600e-01 -5.355088e+08  4.937173e+08
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.17]                                 -5.815106e+06  4.317708e+08   -0.013468  9.892547e-01 -8.522092e+08  8.405790e+08
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.17]                                     2.328308e+07  3.853785e+08    0.060416  9.518258e-01 -7.321687e+08  7.787349e+08
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.18]                                 5.673997e+07  3.141549e+08    0.180611  8.566776e-01 -5.590934e+08  6.725733e+08
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.18]                                  -2.521664e+07  5.060793e+08   -0.049827  9.602612e-01 -1.017277e+09  9.668433e+08
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.18]                                 8.887855e+07  9.045097e+08    0.098262  9.217273e-01 -1.684219e+09  1.861976e+09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.18]                                   2.223810e+10  5.595354e+10    0.397439  6.910554e-01 -8.744680e+10  1.319230e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.18]                                  -4.013551e+07  1.056684e+09   -0.037982  9.697027e-01 -2.111539e+09  2.031268e+09
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.18]                                1.112814e+11  2.810540e+11    0.395943  6.921584e-01 -4.396646e+11  6.622274e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.18]                          1.322995e+07  7.505319e+08    0.017627  9.859365e-01 -1.458027e+09  1.484487e+09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.18]                                  2.532975e+07  1.655519e+08    0.153002  8.784010e-01 -2.991992e+08  3.498587e+08
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.18]                                    -6.263964e+07  4.848664e+08   -0.129189  8.972112e-01 -1.013116e+09  8.878370e+08
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.19]                                -3.072344e+07  4.206765e+08   -0.073033  9.417815e-01 -8.553694e+08  7.939226e+08
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.19]                                  -9.600481e+07  6.510348e+08   -0.147465  8.827691e-01 -1.372219e+09  1.180209e+09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.19]                                 1.251322e+07  6.443119e+08    0.019421  9.845057e-01 -1.250522e+09  1.275548e+09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.19]                                   1.871312e+07  3.965468e+08    0.047190  9.623629e-01 -7.586318e+08  7.960581e+08
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.19]                                   3.485046e+07  4.705455e+08    0.074064  9.409615e-01 -8.875529e+08  9.572538e+08
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.19]                               -7.071725e+09  1.744321e+10   -0.405414  6.851849e-01 -4.126540e+10  2.712195e+10
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.19]                         -4.427203e+07  3.828731e+08   -0.115631  9.079481e-01 -7.948127e+08  7.062686e+08
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.19]                                 -9.094024e+07  5.478734e+08   -0.165988  8.681712e-01 -1.164928e+09  9.830480e+08
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.19]                                     1.836150e+07  4.487284e+08    0.040919  9.673616e-01 -8.612742e+08  8.979972e+08
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.20]                                -9.314794e+06  1.582830e+08   -0.058849  9.530740e-01 -3.195947e+08  3.009651e+08
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.20]                                  -9.833747e+06  1.977265e+08   -0.049734  9.603356e-01 -3.974342e+08  3.777667e+08
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.20]                                -6.283141e+05  2.530251e+08   -0.002483  9.980188e-01 -4.966297e+08  4.953731e+08
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.20]                                  -3.994294e+07  2.599910e+08   -0.153632  8.779041e-01 -5.495996e+08  4.697137e+08
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.20]                                  -2.526912e+07  1.402045e+08   -0.180230  8.569766e-01 -3.001099e+08  2.495716e+08
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.20]                               -3.759688e+09  9.900925e+09   -0.379731  7.041560e-01 -2.316833e+10  1.564895e+10
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.20]                          2.523414e+07  1.772529e+08    0.142362  8.867977e-01 -3.222322e+08  3.727004e+08
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.20]                                 -8.464649e+06  5.864552e+07   -0.144336  8.852392e-01 -1.234266e+08  1.064973e+08
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.20]                                    -4.689827e+06  3.350591e+07   -0.139970  8.886874e-01 -7.037097e+07  6.099132e+07
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.21]                                 1.604739e+06  1.430077e+07    0.112213  9.106572e-01 -2.642885e+07  2.963832e+07
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.21]                                  -2.061378e+05  2.118305e+06   -0.097313  9.224808e-01 -4.358620e+06  3.946344e+06
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.21]                                 8.704469e+04  5.858084e+05    0.148589  8.818820e-01 -1.061307e+06  1.235396e+06
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.21]                                  -1.702734e+10  4.326106e+10   -0.393595  6.938914e-01 -1.018314e+11  6.777669e+10
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.21]                                   1.226041e-07  1.970347e-06    0.062225  9.503857e-01 -3.739838e-06  3.985047e-06
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.21]                                7.201595e+10  1.818540e+11    0.396010  6.921093e-01 -2.844698e+11  4.285017e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.21]                         -8.069323e-07  8.534352e-06   -0.094551  9.246740e-01 -1.753670e-05  1.592283e-05
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.21]                                 -4.619282e-07  3.537235e-06   -0.130590  8.961031e-01 -7.395918e-06  6.472061e-06
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.21]                                    -2.155665e-06  1.650709e-05   -0.130590  8.961031e-01 -3.451428e-05  3.020295e-05
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.22]                                 1.475531e-07  2.283019e-06    0.064631  9.484698e-01 -4.327816e-06  4.622922e-06
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.22]                                  -1.179726e-07  1.590199e-06   -0.074187  9.408634e-01 -3.235217e-06  2.999271e-06
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.22]                                 6.986600e-08  9.171419e-07    0.076178  9.392796e-01 -1.727994e-06  1.867726e-06
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.22]                                  -3.859204e+10  9.442178e+10   -0.408720  6.827573e-01 -2.236857e+11  1.465016e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.22]                                   4.704702e-08  5.409388e-07    0.086973  9.306954e-01 -1.013347e-06  1.107441e-06
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.22]                                5.346342e-07  4.761079e-06    0.112293  9.105944e-01 -8.798440e-06  9.867709e-06
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.22]                         -3.597617e-08  3.586300e-07   -0.100316  9.200965e-01 -7.389934e-07  6.670411e-07
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.22]                                 -1.810661e-07  1.198902e-06   -0.151027  8.799589e-01 -2.531257e-06  2.169125e-06
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.22]                                     5.702882e-07  3.642292e-06    0.156574  8.755849e-01 -6.569643e-06  7.710219e-06
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.23]                                -4.312552e-08  6.490105e-07   -0.066448  9.470229e-01 -1.315371e-06  1.229120e-06
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.23]                                  -1.140401e-08  3.661016e-07   -0.031150  9.751509e-01 -7.290675e-07  7.062595e-07
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.23]                                -3.956451e-08  2.196343e-07   -0.180138  8.570491e-01 -4.701104e-07  3.909814e-07
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.23]                                   1.769799e+00  6.828226e-01    2.591887  9.563918e-03  4.312717e-01  3.108326e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.23]                                   8.494801e-01  1.087251e+00    0.781310  4.346454e-01 -1.281843e+00  2.980803e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.23]                               -3.553596e-07  2.388571e-06   -0.148775  8.817353e-01 -5.037641e-06  4.326921e-06
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.23]                          3.600349e-08  6.658790e-07    0.054069  9.568816e-01 -1.269309e-06  1.341316e-06
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.23]                                 -1.247451e-08  1.570624e-07   -0.079424  9.366976e-01 -3.203617e-07  2.954126e-07
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.23]                                     1.724558e+00  1.573713e+00    1.095853  2.731789e-01 -1.360369e+00  4.809486e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.24]                                -1.158425e-08  6.560465e-08   -0.176577  8.598458e-01 -1.401881e-07  1.170196e-07
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.24]                                   7.306653e-08  6.720575e-07    0.108721  9.134270e-01 -1.244358e-06  1.390491e-06
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.24]                                 1.327738e-08  7.720933e-08    0.171966  8.634690e-01 -1.380749e-07  1.646297e-07
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.24]                                   1.966028e+00  7.950082e-01    2.472966  1.342203e-02  4.075855e-01  3.524471e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.24]                                  -4.098768e+10  1.085916e+11   -0.377448  7.058516e-01 -2.538582e+11  1.718828e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.24]                                8.904329e+10  2.251044e+11    0.395564  6.924378e-01 -3.522255e+11  5.303121e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.24]                          4.295076e-08  2.404471e-07    0.178629  8.582341e-01 -4.283941e-07  5.142957e-07
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.24]                                  1.443526e-08  1.105386e-07    0.130590  8.961031e-01 -2.022519e-07  2.311224e-07
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.24]                                    -2.638118e+11  6.713320e+11   -0.392968  6.943546e-01 -1.579814e+12  1.052190e+12
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.25]                                -5.658314e-09  3.746570e-08   -0.151027  8.799589e-01 -7.910177e-08  6.778514e-08
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.25]                                  -1.532551e-08  2.462934e-07   -0.062225  9.503857e-01 -4.981308e-07  4.674798e-07
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.25]                                -1.693125e-09  1.357002e-08   -0.124770  9.007094e-01 -2.829424e-08  2.490799e-08
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.25]                                   6.958302e-01  9.571393e-01    0.726990  4.672554e-01 -1.180436e+00  2.572096e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.25]                                   1.021071e+00  1.667465e+00    0.612349  5.403256e-01 -2.247636e+00  4.289777e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.25]                               -9.912973e-10  9.366424e-09   -0.105835  9.157160e-01 -1.935216e-08  1.736957e-08
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.25]                          2.700978e-10  3.000951e-09    0.090004  9.282864e-01 -5.612623e-09  6.152818e-09
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.25]                                  1.020883e+10  2.502346e+10    0.407970  6.833074e-01 -3.884430e+10  5.926196e+10
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.25]                                    -1.539223e+10  3.632872e+10   -0.423693  6.718019e-01 -8.660688e+10  5.582242e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.26]                                -8.363247e-12  1.715893e-09   -0.004874  9.961113e-01 -3.372003e-09  3.355277e-09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.26]                                  -6.195608e-11  5.854015e-10   -0.105835  9.157160e-01 -1.209510e-09  1.085598e-09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.26]                                -1.420040e-10  2.630923e-09   -0.053975  9.569566e-01 -5.299364e-09  5.015356e-09
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.26]                                   8.844325e-01  1.337667e+00    0.661176  5.085203e-01 -1.737776e+00  3.506641e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.26]                                  -7.140576e+10  1.754214e+11   -0.407053  6.839810e-01 -4.152818e+11  2.724702e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.26]                                1.865509e-10  4.053164e-09    0.046026  9.632908e-01 -7.758808e-09  8.131910e-09
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.26]                          2.250370e+11  5.680593e+11    0.396151  6.920054e-01 -8.885214e+11  1.338595e+12
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.26]                                  1.781877e-10  5.720337e-09    0.031150  9.751509e-01 -1.103531e-08  1.139168e-08
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.26]                                     2.188327e+11  5.463658e+11    0.400524  6.887821e-01 -8.522002e+11  1.289866e+12
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.27]                                 2.171876e-10  3.147198e-09    0.069010  9.449837e-01 -5.952219e-09  6.386594e-09
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.27]                                   2.213692e-10  2.389122e-09    0.092657  9.261785e-01 -4.461992e-09  4.904731e-09
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.27]                                 7.671850e-41  1.468153e-39    0.052255  9.583268e-01 -2.801280e-39  2.954717e-39
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.27]                                  -5.046715e+11  1.126938e+12   -0.447826  6.542923e-01 -2.713791e+12  1.704448e+12
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.27]                                   1.505597e+11  3.623330e+11    0.415529  6.777671e-01 -5.597164e+11  8.608358e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.27]                                7.100200e-11  1.315461e-09    0.053975  9.569566e-01 -2.507678e-09  2.649682e-09
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.27]                          7.544380e+10  1.921735e+11    0.392582  6.946397e-01 -3.012710e+11  4.521587e+11
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.27]                                  7.100200e-11  1.315461e-09    0.053975  9.569566e-01 -2.507678e-09  2.649682e-09
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.27]                                     6.486350e+10  1.638038e+11    0.395983  6.921291e-01 -2.562387e+11  3.859657e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.28]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.28]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.28]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.28]                                  -1.098169e+00  1.339081e+00   -0.820091  4.121905e-01 -3.723149e+00  1.526812e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.28]                                   1.222966e+11  3.065912e+11    0.398891  6.899849e-01 -4.787097e+11  7.233029e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.28]                                0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.28]                          5.730838e+10  1.447417e+11    0.395935  6.921641e-01 -2.264267e+11  3.410434e+11
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.28]                                 -8.661707e-01  1.685211e+00   -0.513983  6.072789e-01 -4.169666e+00  2.437324e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.28]                                     3.204852e+10  7.349408e+10    0.436069  6.627991e-01 -1.120209e+11  1.761179e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.29]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.29]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.29]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.29]                                   7.459872e+11  2.280284e+12    0.327147  7.435663e-01 -3.724021e+12  5.215995e+12
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.29]                                  -8.658216e+10  2.176286e+11   -0.397844  6.907570e-01 -5.131964e+11  3.400321e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.29]                                0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.29]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.29]                                  7.459872e+11  2.280284e+12    0.327147  7.435663e-01 -3.724021e+12  5.215995e+12
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.29]                                    -1.066880e+11  2.750012e+11   -0.387955  6.980607e-01 -6.457689e+11  4.323928e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.30]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.30]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.30]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.30]                                   1.706916e+00  7.858605e-01    2.172034  2.988479e-02  1.664052e-01  3.247427e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.30]                                   9.551881e-01  1.272017e+00    0.750924  4.527224e-01 -1.538329e+00  3.448705e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.30]                                0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.30]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.30]                                  2.397349e+00  1.177611e+00    2.035773  4.180877e-02  8.889527e-02  4.705802e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.30]                                     1.580308e+11  4.168128e+11    0.379141  7.045941e-01 -6.590412e+11  9.751028e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.31]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.31]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.31]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.31]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.31]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.31]                                2.827018e+10  9.015105e+10    0.313587  7.538438e-01 -1.484516e+11  2.049920e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.31]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.31]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.31]                                     0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.32]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.32]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.32]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.32]                                   7.705092e+10  2.071532e+11    0.371951  7.099398e-01 -3.290286e+11  4.831304e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.32]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.32]                                1.183731e+11  2.894626e+11    0.408941  6.825949e-01 -4.490562e+11  6.858023e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.32]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.32]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.32]                                     8.290251e+10  2.197260e+11    0.377300  7.059619e-01 -3.478231e+11  5.136282e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.33]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.33]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.33]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.33]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.33]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.33]                                2.160718e+11  5.822163e+11    0.371119  7.105593e-01 -9.252384e+11  1.357382e+12
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.33]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.33]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.33]                                     0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.34]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.34]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.34]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.34]                                   1.942919e+11  4.814548e+11    0.403552  6.865542e-01 -7.494969e+11  1.138081e+12
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.34]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.34]                                6.509242e+10  1.747199e+11    0.372553  7.094919e-01 -2.774085e+11  4.075934e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.34]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.34]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.34]                                     0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.36]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.36]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.36]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.36]                                   1.574063e+11  3.952241e+11    0.398271  6.904419e-01 -6.173457e+11  9.321584e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.36]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.36]                                0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.36]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.36]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.36]                                    -4.388087e+10  1.090663e+11   -0.402332  6.874512e-01 -2.576819e+11  1.699201e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.37]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.37]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.37]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.37]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.37]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.37]                                2.423999e+11  6.056009e+11    0.400264  6.889740e-01 -9.447506e+11  1.429550e+12
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.37]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.37]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.37]                                     0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.38]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.38]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.38]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.38]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.38]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.38]                                8.054814e+11  1.988477e+12    0.405075  6.854345e-01 -3.092501e+12  4.703464e+12
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.38]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.38]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.38]                                     0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.39]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.39]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.39]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.39]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.39]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.39]                                1.130108e+11  2.660998e+11    0.424693  6.710727e-01 -4.086208e+11  6.346423e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.39]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.39]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.39]                                     0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.40]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.40]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.40]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.40]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.40]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.40]                                1.156491e+10  3.751203e+10    0.308299  7.578637e-01 -6.196937e+10  8.509919e+10
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.40]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.40]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.40]                                     0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.41]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.41]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.41]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.41]                                  -1.775210e+11  4.109840e+11   -0.431941  6.657967e-01 -9.831670e+11  6.281250e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.41]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.41]                                0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.41]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.41]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.41]                                    -1.775210e+11  4.109840e+11   -0.431941  6.657967e-01 -9.831670e+11  6.281250e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.42]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.42]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.42]                                 0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.42]                                   3.103202e+11  7.469210e+11    0.415466  6.778129e-01 -1.153858e+12  1.774498e+12
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.42]                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.42]                                0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.42]                          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.42]                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.42]                                     3.514960e+11  8.758497e+11    0.401320  6.881962e-01 -1.365419e+12  2.068411e+12
+C(Transceiver_Manufacturer)[T.Accelight]:C(Fan_Speed_Range)[T.L]                           -2.298429e-01  3.703203e-01   -0.620660  5.348427e-01 -9.557764e-01  4.960907e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Fan_Speed_Range)[T.L]                              0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Fan_Speed_Range)[T.L]                           -9.956036e+11  5.616311e+12   -0.177270  8.593012e-01 -1.200518e+13  1.001397e+13
+C(Transceiver_Manufacturer)[T.Finisar]:C(Fan_Speed_Range)[T.L]                             -4.486833e-01  2.701440e-01   -1.660904  9.677512e-02 -9.782425e-01  8.087597e-02
+C(Transceiver_Manufacturer)[T.Hisense]:C(Fan_Speed_Range)[T.L]                             -7.081501e-02  8.734087e-01   -0.081079  9.353814e-01 -1.782945e+00  1.641315e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Fan_Speed_Range)[T.L]                           8.904329e+10  2.251044e+11    0.395564  6.924378e-01 -3.522255e+11  5.303121e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Fan_Speed_Range)[T.L]                     1.102190e+11  2.782406e+11    0.396128  6.920219e-01 -4.352121e+11  6.556500e+11
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Fan_Speed_Range)[T.L]                            -2.333891e+10  5.727579e+10   -0.407483  6.836652e-01 -1.356158e+11  8.893799e+10
+C(Transceiver_Manufacturer)[T.O-NET]:C(Fan_Speed_Range)[T.L]                                1.126818e+00  8.139105e-01    1.384449  1.662627e-01 -4.686790e-01  2.722315e+00
+C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]                                                  -1.405132e-02  2.201190e-01   -0.063835  9.491033e-01 -4.455474e-01  4.174447e-01
+C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]                                                  -2.891317e-01  2.280499e-01   -1.267844  2.048935e-01 -7.361746e-01  1.579111e-01
+C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]                                                   2.903023e-01  2.392240e-01    1.213516  2.249713e-01 -1.786451e-01  7.592496e-01
+C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]                                                  -2.135437e-01  2.555230e-01   -0.835712  4.033437e-01 -7.144417e-01  2.873542e-01
+C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]                                                   6.577681e-01  3.113267e-01    2.112791  3.465216e-02  4.747901e-02  1.268057e+00
+C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]                                                   2.349987e-01  2.873574e-01    0.817792  4.135022e-01 -3.283038e-01  7.983012e-01
+C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]                                                   7.634429e-02  3.658297e-01    0.208688  8.346975e-01 -6.407863e-01  7.934749e-01
+C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]                                                   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]                                                  1.573939e+11  3.911970e+11    0.402339  6.874461e-01 -6.094639e+11  9.242516e+11
+C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]                                                  1.226130e+10  3.219538e+10    0.380840  7.033326e-01 -5.085083e+10  7.537343e+10
+C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]                                                 -3.910803e+10  9.786822e+10   -0.399599  6.894635e-01 -2.309577e+11  1.527416e+11
+C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]                                                  4.260021e+10  1.096348e+11    0.388565  6.976095e-01 -1.723154e+11  2.575158e+11
+C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]                                                 -1.576074e+10  3.940674e+10   -0.399950  6.892047e-01 -9.300919e+10  6.148771e+10
+C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]                                                 -7.299444e-03  1.873635e+00   -0.003896  9.968917e-01 -3.680158e+00  3.665560e+00
+C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]                                                 -1.306003e+11  3.309599e+11   -0.394611  6.931417e-01 -7.793761e+11  5.181756e+11
+C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]                                                  6.921784e-01  1.624389e+00    0.426116  6.700356e-01 -2.492088e+00  3.876444e+00
+C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]                                                  7.819356e+10  1.977353e+11    0.395446  6.925255e-01 -3.094241e+11  4.658112e+11
+C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]                                                 -7.039683e+09  1.719530e+10   -0.409396  6.822612e-01 -4.074739e+10  2.666802e+10
+C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]                                                 -3.726662e+09  9.720065e+09   -0.383399  7.014351e-01 -2.278076e+10  1.532744e+10
+C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]                                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]                                                  5.277787e+10  1.325627e+11    0.398135  6.905420e-01 -2.070828e+11  3.126385e+11
+C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]                                                  1.152054e-01  7.584636e-01    0.151893  8.792753e-01 -1.371600e+00  1.602010e+00
+C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]                                                  4.773905e-01  8.488613e-01    0.562389  5.738679e-01 -1.186620e+00  2.141401e+00
+C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]                                                 -2.378649e-01  1.034074e+00   -0.230027  8.180772e-01 -2.264945e+00  1.789215e+00
+C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]                                                 -5.588888e-01  1.408813e+00   -0.396709  6.915935e-01 -3.320564e+00  2.202786e+00
+C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]                                                 -5.046715e+11  1.126938e+12   -0.447826  6.542923e-01 -2.713791e+12  1.704448e+12
+C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]                                                 -2.676790e+00  1.393262e+00   -1.921239  5.474010e-02 -5.407982e+00  5.440247e-02
+C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]                                                  7.459872e+11  2.280284e+12    0.327147  7.435663e-01 -3.724021e+12  5.215995e+12
+C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]                                                  2.315122e-01  8.936413e-01    0.259066  7.955914e-01 -1.520280e+00  1.983304e+00
+C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]                                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]                                                 -1.253807e+11  3.470209e+11   -0.361306  7.178811e-01 -8.056407e+11  5.548792e+11
+C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]                                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]                                                 -2.395087e+10  5.130069e+10   -0.466872  6.406051e-01 -1.245149e+11  7.661313e+10
+C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]                                                  9.345179e+10  2.713381e+11    0.344411  7.305471e-01 -4.384483e+11  6.253519e+11
+C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]                                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]                                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]                                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]                                                  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]                                                 -1.775210e+11  4.109840e+11   -0.431941  6.657967e-01 -9.831670e+11  6.281250e+11
+C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]                                                 -5.296626e+11  1.283007e+12   -0.412829  6.797438e-01 -3.044722e+12  1.985397e+12
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]         -4.843654e-01  4.818024e-01   -1.005320  3.147760e-01 -1.428836e+00  4.601049e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]         -2.392705e+11  6.841302e+11   -0.349744  7.265407e-01 -1.580361e+12  1.101820e+12
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]            3.441341e-01  3.585693e-01    0.959742  3.372164e-01 -3.587641e-01  1.047032e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]            1.684432e-01  1.138181e+00    0.147993  8.823521e-01 -2.062717e+00  2.399603e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]        -8.904329e+10  2.251044e+11   -0.395564  6.924378e-01 -5.303121e+11  3.522255e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.2]:C(Fan_Speed_Range)[T.L]              9.586926e+10  2.055718e+11    0.466354  6.409759e-01 -3.071102e+11  4.988487e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]          1.450048e-01  4.790649e-01    0.302683  7.621399e-01 -7.940992e-01  1.084109e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]          1.453141e+11  3.798501e+11    0.382556  7.020597e-01 -5.993005e+11  8.899287e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]            1.427904e-01  3.745491e-01    0.381233  7.030415e-01 -5.914327e-01  8.770135e-01
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]            6.759546e-01  1.659348e+00    0.407362  6.837542e-01 -2.576840e+00  3.928749e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]        -8.904329e+10  2.251044e+11   -0.395564  6.924378e-01 -5.303121e+11  3.522255e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.3]:C(Fan_Speed_Range)[T.L]              9.524142e+09  2.345502e+10    0.406060  6.847103e-01 -3.645438e+10  5.550267e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]         -6.519789e-01  5.039644e-01   -1.293700  1.958094e-01 -1.639893e+00  3.359351e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]          5.210016e+10  1.335469e+11    0.390126  6.964544e-01 -2.096898e+11  3.138902e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]           -1.229002e-01  3.869012e-01   -0.317653  7.507574e-01 -8.813369e-01  6.355365e-01
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]           -8.799809e-02  1.205922e+00   -0.072972  9.418306e-01 -2.451948e+00  2.275952e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]        -8.904329e+10  2.251044e+11   -0.395564  6.924378e-01 -5.303121e+11  3.522255e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.4]:C(Fan_Speed_Range)[T.L]              6.314471e+10  1.953530e+11    0.323234  7.465273e-01 -3.198030e+11  4.460924e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]          1.648313e-01  5.525270e-01    0.298323  7.654653e-01 -9.182793e-01  1.247942e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]          7.049600e+10  1.759218e+11    0.400724  6.886352e-01 -2.743609e+11  4.153529e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]            2.328238e-01  4.123207e-01    0.564667  5.723175e-01 -5.754424e-01  1.041090e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]            3.451184e-01  1.345745e+00    0.256452  7.976093e-01 -2.292926e+00  2.983162e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]        -8.904329e+10  2.251044e+11   -0.395564  6.924378e-01 -5.303121e+11  3.522255e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.5]:C(Fan_Speed_Range)[T.L]             -7.905235e+09  2.011145e+10   -0.393071  6.942781e-01 -4.732941e+10  3.151894e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]         -6.528301e-01  5.495998e-01   -1.187828  2.349394e-01 -1.730203e+00  4.245424e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]         -1.271397e+11  3.224922e+11   -0.394241  6.934145e-01 -7.593164e+11  5.050371e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]           -8.516344e-02  4.441116e-01   -0.191761  8.479344e-01 -9.557490e-01  7.854221e-01
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]           -9.484668e-01  1.627091e+00   -0.582922  5.599638e-01 -4.138029e+00  2.241096e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]        -8.904329e+10  2.251044e+11   -0.395564  6.924378e-01 -5.303121e+11  3.522255e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.6]:C(Fan_Speed_Range)[T.L]              1.418095e+11  3.476147e+11    0.407950  6.833220e-01 -5.396145e+11  8.232335e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]         -5.243748e-01  5.368184e-01   -0.976820  3.286905e-01 -1.576692e+00  5.279426e-01
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]          7.899341e+10  1.986346e+11    0.397682  6.908761e-01 -3.103871e+11  4.683740e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]           -1.766922e-01  4.407340e-01   -0.400904  6.885021e-01 -1.040657e+00  6.872722e-01
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]           -4.277993e+00  1.635537e+00   -2.615650  8.923896e-03 -7.484112e+00 -1.071873e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]         4.732969e+10  1.181139e+11    0.400712  6.886436e-01 -1.842073e+11  2.788667e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.7]:C(Fan_Speed_Range)[T.L]             -6.140849e+10  1.538965e+11   -0.399025  6.898866e-01 -3.630895e+11  2.402725e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]          2.042131e-01  6.528715e-01    0.312792  7.544473e-01 -1.075601e+00  1.484028e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]          8.478956e+10  2.172398e+11    0.390304  6.963231e-01 -3.410625e+11  5.106416e+11
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]            5.035336e-02  5.328071e-01    0.094506  9.247099e-01 -9.941006e-01  1.094807e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.8]:C(Fan_Speed_Range)[T.L]             -1.641986e+10  3.572180e+10   -0.459659  6.457744e-01 -8.644479e+10  5.360508e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]            0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]   0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.9]:C(Fan_Speed_Range)[T.L]              0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]          -1.573939e+11  3.911970e+11   -0.402339  6.874461e-01 -9.242516e+11  6.094639e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.10]:C(Fan_Speed_Range)[T.L]            -1.540873e+10  3.862894e+10   -0.398891  6.899852e-01 -9.113247e+10  6.031502e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]          -5.663476e+09  1.524937e+10   -0.371391  7.103571e-01 -3.555659e+10  2.422964e+10
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.11]:C(Fan_Speed_Range)[T.L]            -1.833629e+10  4.469193e+10   -0.410282  6.816110e-01 -1.059452e+11  6.927264e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]           2.086162e+10  5.141925e+10    0.405716  6.849629e-01 -7.993478e+10  1.216580e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.12]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]           4.545764e+10  1.093495e+11    0.415710  6.776347e-01 -1.688986e+11  2.598139e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]        1.859302e+10  5.009457e+10    0.371158  7.105302e-01 -7.960663e+10  1.167927e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.13]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]           1.576074e+10  3.940674e+10    0.399950  6.892047e-01 -6.148771e+10  9.300919e+10
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.14]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]           1.441738e-01  1.950513e+00    0.073916  9.410793e-01 -3.679388e+00  3.967735e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]       -8.904329e+10  2.251044e+11   -0.395564  6.924378e-01 -5.303121e+11  3.522255e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.15]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]           4.683016e+10  1.170753e+11    0.400000  6.891678e-01 -1.826708e+11  2.763311e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]       -8.811378e+09  2.191567e+10   -0.402058  6.876527e-01 -5.177234e+10  3.414959e+10
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.16]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]          -4.320844e-01  1.762673e+00   -0.245130  8.063624e-01 -3.887426e+00  3.023257e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]       -3.002328e+10  7.442803e+10   -0.403387  6.866754e-01 -1.759235e+11  1.158769e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.17]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]       -1.672368e+11  4.227970e+11   -0.395549  6.924494e-01 -9.960397e+11  6.615660e+11
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.18]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]       -6.406933e+09  1.537787e+10   -0.416633  6.769586e-01 -3.655194e+10  2.373807e+10
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.19]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]       -3.923352e+09  1.023444e+10   -0.383348  7.014727e-01 -2.398577e+10  1.613906e+10
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.20]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.21]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]           3.859204e+10  9.442178e+10    0.408720  6.827573e-01 -1.465016e+11  2.236857e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.22]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]          -1.850639e-01  8.156708e-01   -0.226886  8.205190e-01 -1.784011e+00  1.413884e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]           6.457132e-01  1.574005e+00    0.410236  6.816448e-01 -2.439785e+00  3.731211e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.23]:C(Fan_Speed_Range)[T.L]            -1.002469e+00  1.802482e+00   -0.556161  5.781180e-01 -4.535848e+00  2.530909e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]          -3.446061e-01  9.085851e-01   -0.379278  7.044925e-01 -2.125692e+00  1.436480e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]           4.098768e+10  1.085916e+11    0.377448  7.058516e-01 -1.718828e+11  2.538582e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.24]:C(Fan_Speed_Range)[T.L]             2.638118e+11  6.713320e+11    0.392968  6.943546e-01 -1.052190e+12  1.579814e+12
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]           3.963132e-01  1.079515e+00    0.367121  7.135389e-01 -1.719845e+00  2.512471e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]          -6.653484e-01  2.033222e+00   -0.327239  7.434968e-01 -4.651043e+00  3.320346e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]          1.313008e+10  3.225267e+10    0.407100  6.839460e-01 -5.009436e+10  7.635451e+10
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.25]:C(Fan_Speed_Range)[T.L]             1.539223e+10  3.632872e+10    0.423693  6.718019e-01 -5.582242e+10  8.660688e+10
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]           7.018858e-01  1.442522e+00    0.486569  6.265785e-01 -2.125868e+00  3.529640e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]           7.140576e+10  1.754214e+11    0.407053  6.839810e-01 -2.724702e+11  4.152818e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.26]:C(Fan_Speed_Range)[T.L]            -2.188327e+11  5.463658e+11   -0.400524  6.887821e-01 -1.289866e+12  8.522002e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]           5.046715e+11  1.126938e+12    0.447826  6.542923e-01 -1.704448e+12  2.713791e+12
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]          -1.505597e+11  3.623330e+11   -0.415529  6.777671e-01 -8.608358e+11  5.597164e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]  3.937423e+10  9.770372e+10    0.402996  6.869627e-01 -1.521530e+11  2.309014e+11
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.27]:C(Fan_Speed_Range)[T.L]            -6.486350e+10  1.638038e+11   -0.395983  6.921291e-01 -3.859657e+11  2.562387e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]           2.683149e+00  1.428531e+00    1.878258  6.038528e-02 -1.171789e-01  5.483477e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]          -1.222966e+11  3.065912e+11   -0.398891  6.899849e-01 -7.233029e+11  4.787097e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]  5.750965e+10  1.450798e+11    0.396400  6.918213e-01 -2.268881e+11  3.419074e+11
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]          2.333891e+10  5.727579e+10    0.407483  6.836652e-01 -8.893799e+10  1.356158e+11
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.28]:C(Fan_Speed_Range)[T.L]            -3.204852e+10  7.349408e+10   -0.436069  6.627991e-01 -1.761179e+11  1.120209e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]          -7.459872e+11  2.280284e+12   -0.327147  7.435663e-01 -5.215995e+12  3.724021e+12
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]           8.658216e+10  2.176286e+11    0.397844  6.907570e-01 -3.400321e+11  5.131964e+11
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.29]:C(Fan_Speed_Range)[T.L]             1.066880e+11  2.750012e+11    0.387955  6.980607e-01 -4.323928e+11  6.457689e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]          -1.658813e-01  9.427895e-01   -0.175947  8.603402e-01 -2.014018e+00  1.682255e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]           1.103795e+00  1.630711e+00    0.676880  4.985035e-01 -2.092863e+00  4.300454e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.30]:C(Fan_Speed_Range)[T.L]            -1.580308e+11  4.168128e+11   -0.379141  7.045941e-01 -9.751028e+11  6.590412e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.31]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]           7.765961e+10  2.036038e+11    0.381425  7.028989e-01 -3.214620e+11  4.767813e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.32]:C(Fan_Speed_Range)[T.L]             7.180802e+10  1.910135e+11    0.375932  7.069786e-01 -3.026330e+11  4.462491e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.33]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]          -1.942919e+11  4.814548e+11   -0.403552  6.865542e-01 -1.138081e+12  7.494969e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.34]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]          -1.574063e+11  3.952241e+11   -0.398271  6.904419e-01 -9.321584e+11  6.173457e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.36]:C(Fan_Speed_Range)[T.L]             4.388087e+10  1.090663e+11    0.402332  6.874512e-01 -1.699201e+11  2.576819e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.37]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.38]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.39]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.40]:C(Fan_Speed_Range)[T.L]             0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]           1.775210e+11  4.109840e+11    0.431941  6.657967e-01 -6.281250e+11  9.831670e+11
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.41]:C(Fan_Speed_Range)[T.L]             1.775210e+11  4.109840e+11    0.431941  6.657967e-01 -6.281250e+11  9.831670e+11
+C(Transceiver_Manufacturer)[T.Accelight]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.CENTERA]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Eoptolink]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]         0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Finisar]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]           3.246196e+11  8.059340e+11    0.402787  6.871167e-01 -1.255241e+12  1.904480e+12
+C(Transceiver_Manufacturer)[T.Hisense]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]           0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Intel Corp]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]        0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.Ligent Photonics]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]  0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.NON-JNPR]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]          0.000000e+00  0.000000e+00         NaN           NaN  0.000000e+00  0.000000e+00
+C(Transceiver_Manufacturer)[T.O-NET]:C(Rack_Unit)[T.42]:C(Fan_Speed_Range)[T.L]             2.834439e+11  6.772200e+11    0.418540  6.755643e-01 -1.044101e+12  1.610988e+12
+================================================================================
+
+  Generating interaction plots...
+  Found 3 unique factor pair interactions:
+    - Fan_Speed_Range × Rack_Unit
+    - Fan_Speed_Range × Transceiver_Manufacturer
+    - Rack_Unit × Transceiver_Manufacturer
+    Plotting Fan_Speed_Range × Rack_Unit
+      Fan_Speed_Range: 2 levels {H-L}
+      Rack_Unit: 41 levels {1-42}
+      Warning: Skipped 25 points with numerical instability for Fan_Speed_Range=H
+      Warning: Skipped 25 points with numerical instability for Fan_Speed_Range=L
+    ✓ Generated: Interaction Plot: Fan_Speed_Range × Rack_Unit
+    Plotting Fan_Speed_Range × Transceiver_Manufacturer
+      Fan_Speed_Range: 2 levels {H-L}
+      Transceiver_Manufacturer: 10 levels {AOI-O-NET}
+      Warning: Skipped 3 points with numerical instability for Fan_Speed_Range=H
+      Warning: Skipped 3 points with numerical instability for Fan_Speed_Range=L
+    ✓ Generated: Interaction Plot: Fan_Speed_Range × Transceiver_Manufacturer
+    Plotting Rack_Unit × Transceiver_Manufacturer
+      Rack_Unit: 41 levels {1-42}
+      Transceiver_Manufacturer: 10 levels {AOI-O-NET}
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=1
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=2
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=3
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=4
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=5
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=6
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=7
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=8
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=9
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=10
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=11
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=12
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=13
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=14
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=15
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=16
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=17
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=18
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=19
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=20
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=21
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=22
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=23
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=24
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=25
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=26
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=27
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=28
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=29
+      Warning: Skipped 3 points with numerical instability for Rack_Unit=30
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=31
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=32
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=33
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=34
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=36
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=37
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=38
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=39
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=40
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=41
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=42
+    ✓ Generated: Interaction Plot: Rack_Unit × Transceiver_Manufacturer
+  Total interaction plots generated: 3
+
+Analysis report saved to: outputs/doe_analysis_report.html
+
+✓ DOE model fit completed
+
+Step 15: Fitting Reduced Design of Experiments model...
+
+================================================================================
+REDUCED MODEL - TERM SELECTION
+================================================================================
+
+Alpha significance level: 0.05
+Total parameters in full model: 820
+Significant terms (p <= 0.05): 25
+Removed non-significant terms: 795
+
+Duplicate Observations Analysis:
+  Total observations: 7600
+  Factor combinations with replicates: 7566
+  Pure Error df: 7382
+  Pure Error SS: 12869.7457
+  LOF F-statistic: 1.2541
+  LOF p-value: 0.121251
+
+================================================================================
+REDUCED MODEL FIT RESULTS
+================================================================================
+
+Model Summary:
+  R-squared: 0.3852
+  Adjusted R-squared: 0.3709
+  F-statistic: 26.8986
+  Prob (F-statistic): 0.000000
+  Residual Std Error: 1.3214
+  Degrees of Freedom: 7426.0
+
+ANOVA Table (Type I - Sequential):
+                                              df        sum_sq     mean_sq           F         PR(>F)
+C(Transceiver_Manufacturer)                  9.0   3416.867951  379.651995  217.438517   0.000000e+00
+C(Rack_Unit)                                40.0    420.470350   10.511759    6.020411   6.566858e-30
+C(Fan_Speed_Range)                           1.0      1.650636    1.650636    0.945371   3.309322e-01
+C(Transceiver_Manufacturer):C(Rack_Unit)   360.0   4773.002669   13.258341    7.593465  2.328162e-294
+C(Rack_Unit):C(Fan_Speed_Range)             40.0     82.574157    2.064354    1.182320   2.001457e-01
+Residual                                  7426.0  12965.944359    1.746020         NaN            NaN
+
+================================================================================
+LACK-OF-FIT TEST (Using Duplicate Observations)
+================================================================================
+        Source      df        sum_sq   mean_sq         F    PR(>F)
+0  Lack of Fit    44.0     96.198706  2.186334  1.254067  0.121251
+1   Pure Error  7382.0  12869.745653  1.743396       NaN       NaN
+2  Total Error  7426.0  12965.944359  1.746020       NaN       NaN
+
+================================================================================
+MODEL COMPARISON: Full vs Reduced
+================================================================================
+
+Full Model:     R² = 0.3897, df = 7382.0, MSE = 1.743698
+Reduced Model:  R² = 0.3852, df = 7426.0, MSE = 1.746020
+Change in R²:   -0.0045
+Change in MSE:  +0.002322
+================================================================================
+
+  Generating interaction plots...
+  Found 2 unique factor pair interactions:
+    - Fan_Speed_Range × Rack_Unit
+    - Rack_Unit × Transceiver_Manufacturer
+    Plotting Fan_Speed_Range × Rack_Unit
+      Fan_Speed_Range: 2 levels {H-L}
+      Rack_Unit: 41 levels {1-42}
+      Warning: Skipped 21 points with numerical instability for Fan_Speed_Range=H
+      Warning: Skipped 21 points with numerical instability for Fan_Speed_Range=L
+    ✓ Generated: Interaction Plot: Fan_Speed_Range × Rack_Unit
+    Plotting Rack_Unit × Transceiver_Manufacturer
+      Rack_Unit: 41 levels {1-42}
+      Transceiver_Manufacturer: 10 levels {AOI-O-NET}
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=1
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=2
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=3
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=4
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=5
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=6
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=7
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=8
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=9
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=10
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=11
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=12
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=13
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=14
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=15
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=16
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=17
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=18
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=19
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=20
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=21
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=22
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=23
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=24
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=25
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=26
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=27
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=28
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=29
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=30
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=31
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=32
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=33
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=34
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=36
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=37
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=38
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=39
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=40
+      Warning: Skipped 1 points with numerical instability for Rack_Unit=41
+      Warning: Skipped 10 points with numerical instability for Rack_Unit=42
+    ✓ Generated: Interaction Plot: Rack_Unit × Transceiver_Manufacturer
+  Total interaction plots generated: 2
+
+Reduced analysis report saved to: outputs/doe_analysis_reduced.html
+
+
+====================================================================================================
+DEBUG: DETAILED MODEL COMPARISON
+====================================================================================================
+
+1. R-SQUARED COMPARISON:
+   Full Model R²:    0.3896924096
+   Reduced Model R²: 0.3852370549
+   Difference:       -0.0044553548
+   % Change:         -1.1433%
+
+2. ERROR METRICS:
+   Full Model MSE:       1.743697727270
+   Reduced Model MSE:    1.746019978295
+   MSE Difference:       +0.002322251025
+   MSE % Change:         +0.133180%
+
+   Full Model Std Error:    1.3204914719
+   Reduced Model Std Error: 1.3213704924
+   Std Error Difference:    +0.0008790206
+   Std Error % Change:      +0.066568%
+
+3. 95% CONFIDENCE INTERVAL WIDTHS:
+   Full Model CI Half-Width (±):    2.5881632849
+   Reduced Model CI Half-Width (±): 2.5898861652
+   CI Width Difference:             +0.0017228803
+   CI Width % Change:               +0.066568%
+
+4. DEGREES OF FREEDOM:
+   Full Model df_resid:    7382.0
+   Reduced Model df_resid: 7426.0
+   Difference:             +44.0
+
+5. MODEL PARAMETERS:
+   Full Model parameters:    820
+   Reduced Model parameters: 451
+   Parameters removed:       369
+
+6. F-STATISTICS:
+   Full Model F-stat:    21.7213834588
+   Reduced Model F-stat: 26.8985712955
+   F-stat Difference:    +5.1771878367
+
+7. PREDICTION RANGE:
+   Full Model Predicted Min/Max:    61.991425 / 126.998984
+   Reduced Model Predicted Min/Max: 61.876213 / 127.000605
+   Full Model Actual Min/Max:       62.000000 / 127.000000
+   Reduced Model Actual Min/Max:    62.000000 / 127.000000
+
+8. RESIDUALS ANALYSIS:
+   Full Model Residuals Mean:    -0.000225453144
+   Reduced Model Residuals Mean: 0.001437717298
+
+   Full Model Residuals Std:     1.3015006592
+   Reduced Model Residuals Std:  1.3062418429
+
+   Full Model Residuals Min/Max:    -3.396573 / 6.753212
+   Reduced Model Residuals Min/Max: -3.298667 / 6.781680
+
+9. SAMPLE SIZE:
+   Full Model observations:    7600
+   Reduced Model observations: 7600
+   Same data?                  True
+
+====================================================================================================
+END DEBUG
+====================================================================================================
+
+✓ Reduced DOE model fit completed
+
+Step 16: Converting HTML reports to PDF...
+
+================================================================================
+CREATING PDF SUMMARIES FROM ANALYSIS RESULTS
+================================================================================
+
+📋 HTML reports are the complete deliverables with full interactive content
+📄 PDF files created with visualizations and comprehensive reference data
+
+✓ doe_design_summary.pdf (0.003 MB)
+✓ Created Actual vs Predicted model fit diagram: /tmp/plotly_chart_full.png
+✓ Created enhanced full model PDF: outputs/doe_analysis_report_summary.pdf
+  - Sections: Model fit, summary, ANOVA, coefficients (top 50), interaction plots, leverage charts
+  - Interaction plots: 3 embedded
+  - Leverage plots: 137 embedded
+✓ doe_analysis_report_summary.pdf (3.038 MB)
+✓ Created Actual vs Predicted model fit diagram: /tmp/plotly_chart.png
+✓ Created enhanced reduced model PDF: outputs/doe_analysis_reduced_summary.pdf
+  - Sections: Model fit, formula, summary, comparison, parameters, interaction plots, leverage charts
+  - Interaction plots: 2 embedded
+  - Leverage plots: 76 embedded
+✓ doe_analysis_reduced_summary.pdf (2.027 MB)
+
+================================================================================
+PDF SUMMARY GENERATION COMPLETE
+================================================================================
+📊 Reduced model PDF now includes all visualizations and charts!
+� HTML files contain complete analysis with interactive plots
+================================================================================
+
+✓ HTML to PDF conversion completed
+
+Step 17: Converting HTML reports to PowerPoint...
+
+Converting full model HTML to PowerPoint...
+  Extracting model fit plot from PDF...
+  Looking for PDF: outputs/doe_analysis_report_summary.pdf
+  ✓ Successfully extracted model fit plot from PDF
+Extracted model diagram and 136 leverage plot images, 3 tables from HTML
+  ✓ Added Model Fit Diagram slide (Actual vs Predicted with 95% CI)
+  ✓ Added Model Equation slide
+  ✓ Added Model Comparison slide
+  ✓ Added ANOVA Table slide
+  ℹ Lack of Fit table not found in full model
+  ✓ Added Parameter Table slide
+  Extracting interaction plots from HTML...
+  Found 3 interaction plot div(s)
+    ✓ Rendered: Interaction Plot: Fan_Speed_Range × Rack_Unit
+    ✓ Rendered: Interaction Plot: Fan_Speed_Range × Transceiver_Manufacturer
+    ✓ Rendered: Interaction Plot: Rack_Unit × Transceiver_Manufacturer
+  ✓ Added 3 Interaction Plot slides
+  ✓ Added 51 Leverage Plot slides
+✓ PowerPoint saved: outputs/doe_analysis_report.pptx
+
+Converting reduced model HTML to PowerPoint...
+  Extracting model fit plot from PDF...
+  Looking for PDF: outputs/doe_analysis_reduced_summary.pdf
+  ✓ Successfully extracted model fit plot from PDF
+Extracted model diagram and 75 leverage plot images, 3 tables from HTML
+  ✓ Added Model Fit Diagram slide (Actual vs Predicted with 95% CI)
+  ✓ Added Model Equation slide
+  ✓ Added Model Comparison slide
+  ✓ Added ANOVA Table slide
+  ✓ Added Lack of Fit slide
+  Extracting interaction plots from HTML...
+  Found 2 interaction plot div(s)
+    ✓ Rendered: Interaction Plot: Fan_Speed_Range × Rack_Unit
+    ✓ Rendered: Interaction Plot: Rack_Unit × Transceiver_Manufacturer
+  ✓ Added 2 Interaction Plot slides
+  ✓ Added 51 Leverage Plot slides
+✓ PowerPoint saved: outputs/doe_analysis_reduced.pptx
+
+Creating comparison PowerPoint...
+  ✓ Added 75 side-by-side leverage comparison slides
+✓ Comparison PowerPoint saved: outputs/doe_model_comparison.pptx
+✓ HTML to PowerPoint conversion completed
+
+Data processing pipeline completed!
+[1m[7m%[27m[1m[0m                                                                                ]7;file://pool-71-124-36-208.clppva.fios.verizon.net/Users/vblake/doe2[0m[27m[24m[Jvblake@pool-71-124-36-208 doe2 % [K[?2004heexit[?2004l
+
+Saving session...
+...copying shared history...
+...saving history...truncating history files...
+...completed.
+Deleting expired sessions...none found.
+
+Script done on Tue Dec  2 22:43:57 2025
