@@ -280,6 +280,10 @@ def create_ttemp_hl_histogram(balanced_low_df, balanced_high_df, output_dir='out
     fig.update_yaxes(title_text='Frequency', row=1, col=1)
     fig.update_yaxes(title_text='Frequency', row=1, col=2)
     
+    # Set x-axis range to 60-75°C with 1-degree tick marks for both histograms
+    fig.update_xaxes(range=[60, 75], dtick=1, row=1, col=1)
+    fig.update_xaxes(range=[60, 75], dtick=1, row=1, col=2)
+    
     # Save HTML file
     html_file = output_path / 'ttemp_hl_histogram.html'
     fig.write_html(str(html_file))
