@@ -192,11 +192,11 @@ def create_ttemp_hl_histogram(balanced_low_df, balanced_high_df, output_dir='out
         specs=[[{'secondary_y': False}, {'secondary_y': False}]]
     )
     
-    # Add low speed histogram
+    # Add low speed histogram (binned by 1-degree Celsius increments: 60-75°C = 15 bins)
     fig.add_trace(
         go.Histogram(
             x=low_temp_data,
-            nbinsx=40,
+            nbinsx=15,
             name='Low Speed',
             marker=dict(color='#2ca02c', line=dict(color='#1f8f1f', width=1.5)),
             showlegend=False
@@ -204,11 +204,11 @@ def create_ttemp_hl_histogram(balanced_low_df, balanced_high_df, output_dir='out
         row=1, col=1
     )
     
-    # Add high speed histogram
+    # Add high speed histogram (binned by 1-degree Celsius increments: 60-130°C = 70 bins)
     fig.add_trace(
         go.Histogram(
             x=high_temp_data,
-            nbinsx=40,
+            nbinsx=70,
             name='High Speed',
             marker=dict(color='#d62728', line=dict(color='#8b0000', width=1.5)),
             showlegend=False
@@ -280,9 +280,9 @@ def create_ttemp_hl_histogram(balanced_low_df, balanced_high_df, output_dir='out
     fig.update_yaxes(title_text='Frequency', row=1, col=1)
     fig.update_yaxes(title_text='Frequency', row=1, col=2)
     
-    # Set x-axis range to 60-75°C with 1-degree tick marks for both histograms
-    fig.update_xaxes(range=[60, 75], dtick=1, row=1, col=1)
-    fig.update_xaxes(range=[60, 75], dtick=1, row=1, col=2)
+    # Set x-axis range to 50-130°C for both histograms with 10-degree tick marks
+    fig.update_xaxes(range=[50, 130], dtick=10, row=1, col=1)
+    fig.update_xaxes(range=[50, 130], dtick=10, row=1, col=2)
     
     # Save HTML file
     html_file = output_path / 'ttemp_hl_histogram.html'
